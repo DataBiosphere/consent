@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.owasp.fileio.FileValidator;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 
@@ -77,11 +76,9 @@ class ResourceTest {
 
   @Test
   void testValidateFileDetails() {
-    Long maxSize = new FileValidator().getMaxFileUploadSize();
     Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
     when(fileDetail.getFileName()).thenReturn("temp.txt");
-    when(fileDetail.getSize()).thenReturn(maxSize);
     try {
       abstractResource.validateFileDetails(fileDetail);
     } catch (Exception e) {
@@ -94,20 +91,6 @@ class ResourceTest {
     Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
     when(fileDetail.getFileName()).thenReturn("C:\\temp\\virus.exe");
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          abstractResource.validateFileDetails(fileDetail);
-        });
-  }
-
-  @Test
-  void testValidateFileDetailsFileSize() {
-    Long maxSize = new FileValidator().getMaxFileUploadSize();
-    Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
-    FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
-    when(fileDetail.getFileName()).thenReturn("temp.txt");
-    when(fileDetail.getSize()).thenReturn(maxSize + 1);
     assertThrows(
         IllegalArgumentException.class,
         () -> {

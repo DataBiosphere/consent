@@ -16,10 +16,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
@@ -132,6 +134,21 @@ public class DatasetRegistrationService implements ConsentLogger {
     return result.study();
   }
 
+  /**
+   * Adds one consent group's write to the study update. A failure is logged and the group skipped,
+   * except a file over the upload limit, which fails the whole update: a skipped group would lose
+   * the client's file.
+   */
+  private <T> void addUnlessFailed(List<T> writes, Callable<T> write) {
+    try {
+      writes.add(write.call());
+    } catch (UploadTooLargeException e) {
+      throw e;
+    } catch (Exception e) {
+      logException(e);
+    }
+  }
+
   private DatasetServiceDAO.StudyUpdateResult writeStudyUpdate(
       Integer studyId,
       StudyUpdateRequest registration,
@@ -156,31 +173,25 @@ public class DatasetRegistrationService implements ConsentLogger {
               if (Objects.nonNull(cg.getDatasetId())) {
                 Dataset existingDataset =
                     datasetDAO.findDatasetsByIdList(List.of(cg.getDatasetId())).getFirst();
-                try {
-                  // Consent group renames aren't allowed on update: use the stored dataset
-                  // name rather than the submitted value, which may be omitted (null) or an
-                  // attempted rename.
-                  DatasetUpdate datasetUpdate =
-                      new DatasetUpdate(
-                          existingDataset.getName(),
-                          existingDataset.getDacId(),
-                          registrationRequestMapper.toDatasetProperties(
-                              cg, ConsentGroupContext.EXISTING_UPDATE));
-                  DatasetServiceDAO.DatasetUpdate update =
-                      createDatasetUpdate(
+                addUnlessFailed(
+                    datasetUpdates,
+                    () -> {
+                      // Consent group renames aren't allowed on update: use the stored dataset
+                      // name rather than the submitted value, which may be omitted (null) or an
+                      // attempted rename.
+                      DatasetUpdate datasetUpdate =
+                          new DatasetUpdate(
+                              existingDataset.getName(),
+                              existingDataset.getDacId(),
+                              registrationRequestMapper.toDatasetProperties(
+                                  cg, ConsentGroupContext.EXISTING_UPDATE));
+                      return createDatasetUpdate(
                           cg.getDatasetId(), user, datasetUpdate, files, uploadedFileCache, idx);
-                  datasetUpdates.add(update);
-                } catch (Exception e) {
-                  logException(e);
-                }
+                    });
               } else {
-                try {
-                  DatasetServiceDAO.DatasetInsert insert =
-                      createDatasetInsert(registration, user, files, uploadedFileCache, idx);
-                  datasetInserts.add(insert);
-                } catch (Exception e) {
-                  logException(e);
-                }
+                addUnlessFailed(
+                    datasetInserts,
+                    () -> createDatasetInsert(registration, user, files, uploadedFileCache, idx));
               }
             });
 

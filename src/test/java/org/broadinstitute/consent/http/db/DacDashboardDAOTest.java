@@ -327,14 +327,8 @@ class DacDashboardDAOTest extends DAOTestHelper {
       DataAccessRequestData data) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        researcher.getUserId(),
-        FIXED_DATE,
-        submissionDate,
-        FIXED_DATE,
-        data,
-        "synthetic-era-id");
+        collectionId, referenceId, researcher.getUserId(), data, "synthetic-era-id");
+    setDarDates(referenceId, FIXED_DATE, submissionDate, FIXED_DATE);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     datasetIdsByReferenceId.put(referenceId, datasetId);
     return referenceId;
@@ -355,11 +349,9 @@ class DacDashboardDAOTest extends DAOTestHelper {
         collectionId,
         referenceId,
         researcher.getUserId(),
-        FIXED_DATE,
-        submissionDate,
-        FIXED_DATE,
         new DataAccessRequestData(),
         "synthetic-era-id");
+    setDarDates(referenceId, FIXED_DATE, submissionDate, FIXED_DATE);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     return referenceId;
   }
@@ -370,6 +362,6 @@ class DacDashboardDAOTest extends DAOTestHelper {
 
   private Integer createElection(String referenceId, Integer datasetId, ElectionStatus status) {
     return electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(), status.getValue(), FIXED_DATE, referenceId, datasetId);
+        ElectionType.DATA_ACCESS.getValue(), status.getValue(), referenceId, datasetId);
   }
 }

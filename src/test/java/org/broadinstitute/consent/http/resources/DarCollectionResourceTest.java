@@ -733,9 +733,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     try (var response = resource.approveCollection(duosSigningOfficial, 1, request, " {} ")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
-    verify(darCollectionService)
-        .approveDarCollection(
-            signingOfficial, collection, request, new SubmissionApproval(null, null));
+    verify(darCollectionService).approveDarCollection(signingOfficial, collection, request, null);
   }
 
   @ParameterizedTest
@@ -755,7 +753,12 @@ class DarCollectionResourceTest extends AbstractTestHelper {
         "[]",
         // A date that isn't a whole number of milliseconds.
         "{\"referenceId\": \"ref\", \"submissionDate\": 1700000000123.5}",
-        "{\"referenceId\": \"ref\", \"submissionDate\": 1e30}"
+        "{\"referenceId\": \"ref\", \"submissionDate\": 1e30}",
+        // Only no body or {} is an old client: nulls and JSON null name no submission.
+        "null",
+        "{\"submissionDate\": null}",
+        "{\"referenceId\": null}",
+        "{\"referenceId\": null, \"submissionDate\": 1700000000123}"
       })
   void testApproveCollectionRejectsAPartialOrMalformedSubmission(String body) {
     try (var response = resource.approveCollection(duosSigningOfficial, 1, request, body)) {

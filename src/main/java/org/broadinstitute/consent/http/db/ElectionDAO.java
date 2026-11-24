@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
@@ -35,25 +34,23 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       @BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING)
           List<String> referenceIds);
 
+  /** The database writes create_date with NOW(). */
   @SqlUpdate(
       """
       INSERT INTO election (election_type, status, create_date, reference_id, dataset_id)
-      VALUES (:electionType, :status, :createDate,:referenceId, :datasetId)
-    """)
+      VALUES (:electionType, :status, NOW(), :referenceId, :datasetId)
+      """)
   @GetGeneratedKeys
   Integer insertElection(
       @Bind("electionType") String electionType,
       @Bind("status") String status,
-      @Bind("createDate") Date createDate,
       @Bind("referenceId") String referenceId,
       @Bind("datasetId") Integer datasetId);
 
+  /** The database writes last_update with NOW(). */
   @SqlUpdate(
-      "UPDATE election SET status = :status, last_update = :lastUpdate WHERE election_id = :electionId ")
-  void updateElectionById(
-      @Bind("electionId") Integer electionId,
-      @Bind("status") String status,
-      @Bind("lastUpdate") Date lastUpdate);
+      "UPDATE election SET status = :status, last_update = NOW() WHERE election_id = :electionId")
+  void updateElectionById(@Bind("electionId") Integer electionId, @Bind("status") String status);
 
   @SqlQuery(
       """
@@ -177,21 +174,21 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       @BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING)
           List<String> referenceIds);
 
+  /**
+   * Finds the newest election of a type for a DAR and dataset. The newest election is the one with
+   * the highest id, not the latest create_date: create_date is the transaction start time, so a
+   * transaction that waits on the collection lock can insert a newer election with an earlier date.
+   */
   @SqlQuery(
       """
-    SELECT e.* FROM election e
-     INNER JOIN
-       (SELECT reference_id, dataset_id, MAX(create_date) max_date
-       FROM election
-       WHERE LOWER(election_type) = lower(:type) AND dataset_id = :datasetId
-       GROUP BY reference_id, dataset_id) election_view
-       ON election_view.max_date = e.create_date
-       AND election_view.reference_id = e.reference_id
-       AND election_view.dataset_id = e.dataset_id
-     WHERE LOWER(e.election_type) = lower(:type)
-     AND e.reference_id = :referenceId
-     AND e.dataset_id = :datasetId
-    """)
+      SELECT e.*
+      FROM election e
+      WHERE LOWER(e.election_type) = LOWER(:type)
+        AND e.reference_id = :referenceId
+        AND e.dataset_id = :datasetId
+      ORDER BY e.election_id DESC
+      LIMIT 1
+      """)
   @UseRowMapper(SimpleElectionMapper.class)
   Election findLastElectionByReferenceIdDatasetIdAndType(
       @Bind("referenceId") String referenceId,
@@ -219,24 +216,24 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   @SqlQuery("SELECT * FROM election e WHERE e.election_id = :electionId")
   Election findElectionById(@Bind("electionId") Integer electionId);
 
+  /** The database writes last_update with NOW(). */
   @SqlUpdate(
-      "UPDATE election SET status = :status, last_update = :lastUpdate, final_access_vote = :finalAccessVote WHERE election_id = :electionId ")
+      "UPDATE election SET status = :status, last_update = NOW(), final_access_vote = :finalAccessVote WHERE election_id = :electionId")
   void updateElectionById(
       @Bind("electionId") Integer electionId,
       @Bind("status") String status,
-      @Bind("lastUpdate") Date lastUpdate,
       @Bind("finalAccessVote") Boolean finalAccessVote);
 
+  /** The database writes last_update with NOW(). */
   @SqlUpdate(
       """
       UPDATE election
-      SET archived = true, last_update = :lastUpdate
+      SET archived = true, last_update = NOW()
       WHERE election_id IN (<electionIds>)
       """)
   void archiveElectionByIds(
       @BindList(value = "electionIds", onEmpty = EmptyHandling.NULL_STRING)
-          List<Integer> electionIds,
-      @Bind("lastUpdate") Date lastUpdate);
+          List<Integer> electionIds);
 
   /**
    * Cancels every open election, of any type, on the DARs of a collection. A closeout calls this

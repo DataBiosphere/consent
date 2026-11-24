@@ -288,14 +288,8 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
         darCollectionDAO.insertDarCollection("DAR-" + UUID.randomUUID(), user.getUserId(), on);
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        user.getUserId(),
-        on,
-        on,
-        on,
-        new DataAccessRequestData(),
-        "era");
+        collectionId, referenceId, user.getUserId(), new DataAccessRequestData(), "era");
+    setDarDates(referenceId, on, on, on);
     for (Integer datasetId : datasetIds) {
       dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     }
@@ -325,8 +319,12 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
   }
 
   private Integer election(String referenceId, Integer datasetId, ElectionStatus status) {
-    return electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(), status.getValue(), VOTED, referenceId, datasetId);
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(), status.getValue(), referenceId, datasetId);
+    // insertElection always writes NOW(), so set the creation time that the old test used.
+    setElectionCreateDate(electionId, VOTED.toInstant());
+    return electionId;
   }
 
   private void approve(String referenceId, Integer datasetId) {

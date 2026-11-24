@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models.support;
 
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.zendesk.client.v2.model.Comment;
 import org.zendesk.client.v2.model.CustomFieldValue;
 import org.zendesk.client.v2.model.Ticket;
@@ -14,6 +15,20 @@ public record TicketFields(
     String description,
     String url,
     List<String> uploads) {
+
+  /**
+   * Parses and validates a support request body. An empty or invalid one is a bad request, not a
+   * server error.
+   */
+  public static TicketFields fromJson(String body) {
+    TicketFields fields =
+        body == null || body.isBlank()
+            ? null
+            : GsonUtil.getInstance().fromJson(body, TicketFields.class);
+    validate(fields == null, "A support request");
+    fields.validate();
+    return fields;
+  }
 
   private static void validate(boolean condition, String prefix) {
     if (condition) {
@@ -29,17 +44,27 @@ public record TicketFields(
     validate(url == null, "URL");
   }
 
-  Ticket toTicket() {
-    Ticket ticket = new Ticket(new Ticket.Requester(name, email), subject, createComment());
+  Ticket toTicket(SupportRequester requester) {
+    Ticket ticket =
+        new Ticket(new Ticket.Requester(name, email), subject, createComment(requester));
     ticket.setCustomFields(createCustomFields());
     // This value specifies tickets as belonging to the DUOS group defined in Zendesk
     ticket.setTicketFormId(360000669472L);
     return ticket;
   }
 
-  private Comment createComment() {
+  /**
+   * The note on who sent the request comes first, before anything the caller wrote, so a line in
+   * the description or URL can't pass for it. The URL is one line.
+   */
+  private Comment createComment(SupportRequester requester) {
     Comment comment = new Comment();
-    comment.setBody(description + "\n\n------------------\nSubmitted from: " + url);
+    comment.setBody(
+        requester.note()
+            + "\n\n"
+            + description
+            + "\n\n------------------\nSubmitted from: "
+            + url.replaceAll("[\\r\\n]+", " "));
     if (uploads != null && !uploads.isEmpty()) {
       comment.setUploads(uploads);
     }

@@ -17,7 +17,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -662,7 +661,6 @@ public class DarCollectionService implements ConsentLogger {
             }
             current.forEach(
                 (d) -> {
-                  Date now = new Date();
                   DataAccessRequestData newData =
                       new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
                   newData.setStatus(null);
@@ -671,8 +669,8 @@ public class DarCollectionService implements ConsentLogger {
                   // The content can change before it is submitted again, so a signing
                   // official has to approve it again.
                   dao.resetDarApprovalSO(d.getReferenceId());
-                  dataAccessRequestDAO.updateDataByReferenceId(
-                      d.getReferenceId(), d.getUserId(), null, now, newData, null);
+                  dataAccessRequestDAO.updateDataToDraftByReferenceId(
+                      d.getReferenceId(), d.getUserId(), newData);
                 });
             return null;
           });
@@ -1095,7 +1093,7 @@ public class DarCollectionService implements ConsentLogger {
         election -> {
           if (!election.getStatus().equals(ElectionStatus.CANCELED.getValue())) {
             electionDAO.updateElectionById(
-                election.getElectionId(), ElectionStatus.CANCELED.getValue(), new Date());
+                election.getElectionId(), ElectionStatus.CANCELED.getValue());
           }
         });
   }
@@ -1358,7 +1356,7 @@ public class DarCollectionService implements ConsentLogger {
             .toList();
 
     if (!oldElectionIds.isEmpty()) {
-      electionDAO.archiveElectionByIds(oldElectionIds, new Date());
+      electionDAO.archiveElectionByIds(oldElectionIds);
     }
   }
 

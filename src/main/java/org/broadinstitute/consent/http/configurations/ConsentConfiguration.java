@@ -52,6 +52,9 @@ public class ConsentConfiguration extends Configuration {
   @Valid @NotNull @JsonProperty
   private final ShowcaseConfiguration showcase = new ShowcaseConfiguration();
 
+  @Valid @NotNull @JsonProperty
+  private final UploadConfiguration uploads = new UploadConfiguration();
+
   public DataSourceFactory getDataSourceFactory() {
     return database;
   }
@@ -86,6 +89,10 @@ public class ConsentConfiguration extends Configuration {
 
   public LiquibaseConfiguration getLiquibaseConfiguration() {
     return liquibase;
+  }
+
+  public UploadConfiguration getUploadConfiguration() {
+    return uploads;
   }
 
   public ShowcaseConfiguration getShowcaseConfiguration() {

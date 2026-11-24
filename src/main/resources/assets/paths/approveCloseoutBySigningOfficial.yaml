@@ -11,13 +11,43 @@ put:
       schema:
         type: string
         format: uuid
+  requestBody:
+    description: >-
+      The closeout submission the signing official reviewed, with its submissionDate. The path
+      names the DAR, so referenceId may be left out; when given, it must be the path's. Clients
+      that predate it may send no body or {}, which is accepted while clients move to sending it.
+    required: false
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: false
+          oneOf:
+            - maxProperties: 0
+            - required:
+                - submissionDate
+          properties:
+            referenceId:
+              type: string
+              description: The closeout's reference id, the same as the path's
+            submissionDate:
+              type: integer
+              format: int64
+              description: The closeout's submission date, in milliseconds from the epoch
   responses:
     200:
       description: Approval recorded
     400:
-      description: Error, consult response for details
+      description: >-
+        Error, consult response for details. A body that names a submission without its
+        submissionDate is rejected.
     401:
       description: Unauthorized
+    404:
+      description: The closeout doesn't exist
+    409:
+      description: >-
+        The closeout isn't the submission the body names, or another request held the closeout.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

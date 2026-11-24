@@ -68,6 +68,8 @@ post:
             type: array
             items:
               $ref: '../schemas/FileStorageObject.yaml'
+    400:
+      description: A file over the upload limit (`googleStore.maxUploadBytes`, 25 MB by default).
     401:
       description: User not authorized to upload file attachments
     404:

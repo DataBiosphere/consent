@@ -105,8 +105,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   /**
    * Whether the DAR is still submitted with this submission date. False for a draft, and for a DAR
    * whose submission date changed since the caller read it. Compared to the millisecond: the column
-   * keeps microseconds (progress reports use now()), but a Java Date, a bound Date and a Gson copy
-   * of a collection keep only milliseconds.
+   * keeps microseconds (every submission writes NOW()), but a Java Date, a bound Date and a Gson
+   * copy of a collection keep only milliseconds.
    */
   @SqlQuery(
       """
@@ -316,6 +316,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               approved_collections.first_submission AS submission_date,
               latest_dar.submission_date AS expiration_basis_date,
               closeouts.closeout_date,
+              -- The database clock wrote the dates above, so the mapper tells whether access has
+              -- lapsed as of the same clock
+              NOW() AS as_of,
               approved_collections.approval_date,
               approved_collections.progress_report_approval_dates,
               latest_dar.reference_id,
@@ -373,8 +376,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * <p>The display record has to come from a qualifying DAR rather than from whatever the
    * collection's newest submission happens to be. This section presents each row as a granted
    * request, and {@link DarMetricsSummaryMapper} derives the current/expired chip from the sourced
-   * DAR's submission date; a progress report still awaiting the outcome of its own election would
-   * otherwise overwrite the grant's title, RUS, and date and reset it to "current".
+   * DAR's submission date as of the database clock ({@code as_of}); a progress report still
+   * awaiting the outcome of its own election would otherwise overwrite the grant's title, RUS, and
+   * date and reset it to "current".
    *
    * @param studyId the study to filter by
    * @return list of {@link DarMetricsSummary}, one per qualifying collection, newest grant first
@@ -445,6 +449,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               approved_collections.first_submission AS submission_date,
               latest_dar.submission_date AS expiration_basis_date,
               closeouts.closeout_date,
+              -- The database clock wrote the dates above, so the mapper tells whether access has
+              -- lapsed as of the same clock
+              NOW() AS as_of,
               approved_collections.approval_date,
               approved_collections.progress_report_approval_dates,
               latest_dar.reference_id,
@@ -699,12 +706,12 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           List<String> referenceIds);
 
   /**
-   * Update DataAccessRequest properties by reference id.
+   * Update DataAccessRequest properties by reference id. The submission date does not change: to
+   * submit a draft, call {@link #updateDraftToSubmittedForCollection} as well. The database writes
+   * update_date with NOW().
    *
    * @param referenceId String
    * @param userId Integer User
-   * @param submissionDate Date Submission Date
-   * @param updateDate Date Update Date
    * @param data DataAccessRequestData DAR Properties
    * @param eraCommonsId The user's era commons id at the time of update
    */
@@ -713,16 +720,35 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
           UPDATE data_access_request
           SET data = regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, user_id = :userId,
-            submission_date = :submissionDate, update_date = :updateDate, era_commons_id = :eraCommonsId
+            update_date = NOW(), era_commons_id = :eraCommonsId
           WHERE reference_id = :referenceId
       """)
   void updateDataByReferenceId(
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
-      @Bind("submissionDate") Date submissionDate,
-      @Bind("updateDate") Date updateDate,
       @Bind("data") @Json DataAccessRequestData data,
       @Bind("eraCommonsId") String eraCommonsId);
+
+  /**
+   * Turns a DAR back into a draft with this data: clears submission_date and era_commons_id. Used
+   * when a canceled collection is resubmitted. The database writes update_date with NOW().
+   *
+   * @param referenceId String
+   * @param userId Integer User
+   * @param data DataAccessRequestData DAR Properties
+   */
+  @RegisterArgumentFactory(JsonArgumentFactory.class)
+  @SqlUpdate(
+      """
+          UPDATE data_access_request
+          SET data = regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, user_id = :userId,
+            submission_date = NULL, update_date = NOW(), era_commons_id = NULL
+          WHERE reference_id = :referenceId
+      """)
+  void updateDataToDraftByReferenceId(
+      @Bind("referenceId") String referenceId,
+      @Bind("userId") Integer userId,
+      @Bind("data") @Json DataAccessRequestData data);
 
   /**
    * Delete DataAccessRequest by reference id
@@ -757,12 +783,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
 
   /**
-   * Create new DataAccessRequest in draft status
+   * Create new DataAccessRequest in draft status. The database writes create_date and update_date
+   * with NOW().
    *
    * @param referenceId String
    * @param userId Integer User
-   * @param createDate Date Creation Date
-   * @param updateDate Date Update Date
    * @param data DataAccessRequestData DAR Properties
    */
   @RegisterArgumentFactory(JsonArgumentFactory.class)
@@ -770,25 +795,21 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
           INSERT INTO data_access_request
             (reference_id, user_id, create_date, update_date, data)
-          VALUES (:referenceId, :userId, :createDate,
-            :updateDate, regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb)
+          VALUES (:referenceId, :userId, NOW(),
+            NOW(), regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb)
       """)
   void insertDraftDataAccessRequest(
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
-      @Bind("createDate") Date createDate,
-      @Bind("updateDate") Date updateDate,
       @Bind("data") @Json DataAccessRequestData data);
 
   /**
-   * Create new DataAccessRequest. This version supersedes `insertV2`
+   * Create new submitted DataAccessRequest. This version supersedes `insertV2`. The database writes
+   * create_date, submission_date and update_date with NOW().
    *
    * @param collectionId Integer DarCollection
    * @param referenceId String
    * @param userId Integer User
-   * @param createDate Date Creation Date
-   * @param submissionDate Date Submission Date
-   * @param updateDate Date Update Date
    * @param data DataAccessRequestData DAR Properties
    */
   @RegisterArgumentFactory(JsonArgumentFactory.class)
@@ -796,22 +817,20 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
           INSERT INTO data_access_request
             (collection_id, reference_id, user_id, create_date, submission_date, update_date, data, era_commons_id)
-          VALUES (:collectionId, :referenceId, :userId, :createDate,
-            :submissionDate, :updateDate, regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, :eraCommonsId)
+          VALUES (:collectionId, :referenceId, :userId, NOW(),
+            NOW(), NOW(), regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, :eraCommonsId)
       """)
   @GetGeneratedKeys
   Integer insertDataAccessRequest(
       @Bind("collectionId") Integer collectionId,
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
-      @Bind("createDate") Date createDate,
-      @Bind("submissionDate") Date submissionDate,
-      @Bind("updateDate") Date updateDate,
       @Bind("data") @Json DataAccessRequestData data,
       @Bind("eraCommonsId") String eraCommonsId);
 
   /**
-   * Create new Progress Report.
+   * Create new Progress Report. The database writes create_date, submission_date and update_date
+   * with NOW().
    *
    * @param parentId String Parent ID
    * @param collectionId Integer DarCollection
@@ -839,7 +858,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * Converts a Draft DataAccessRequest into a non-draft DataAccessRequest. Any signing official
    * approval on the draft is removed: a draft can't be approved, so one there predates the content
    * being submitted. requires_so_approval goes back to NULL (no requirement); the caller sets it
-   * again when the submission needs it.
+   * again when the submission needs it. The database writes submission_date with NOW().
    *
    * @param referenceId String
    */

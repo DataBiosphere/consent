@@ -393,7 +393,6 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     Integer firstVote =
@@ -403,7 +402,6 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     Integer secondVote =
@@ -482,7 +480,6 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, voteType.getValue());
@@ -539,14 +536,8 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
       Date submissionDate) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        user.getUserId(),
-        FIXED_DATE, // createDate
-        submissionDate,
-        FIXED_DATE, // updateDate
-        data,
-        "era-commons-id");
+        collectionId, referenceId, user.getUserId(), data, "era-commons-id");
+    setDarDates(referenceId, FIXED_DATE, submissionDate, FIXED_DATE);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     return referenceId;
   }

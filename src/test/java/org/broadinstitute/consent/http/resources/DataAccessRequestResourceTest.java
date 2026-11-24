@@ -52,6 +52,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
 import org.broadinstitute.consent.http.enumeration.DarDocumentDeletionReason;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
@@ -72,6 +73,7 @@ import org.broadinstitute.consent.http.models.DatasetDaaSnapshot;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.SubmissionApproval;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
@@ -91,6 +93,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -580,7 +583,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("new-irb.pdf");
     when(formData.getType()).thenReturn("pdf");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "new-irb"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
 
@@ -674,11 +676,28 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
 
     Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
+  }
+
+  // An upload over the limit is the client's error.
+  @Test
+  void testUploadIrbDocumentOverTheLimitIsABadRequest() throws Exception {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("temp.txt");
+    when(formData.getType()).thenReturn("txt");
+    when(gcsService.storeDocument(any(), any(), any()))
+        .thenThrow(new UploadTooLargeException(25_000_000));
+
+    try (Response response =
+        resource.uploadIrbDocument(
+            duosUser, "", IOUtils.toInputStream("test", Charset.defaultCharset()), formData)) {
+      assertEquals(400, response.getStatus());
+    }
   }
 
   @Test
@@ -704,7 +723,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
 
@@ -734,7 +752,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "new"));
 
     Response response =
@@ -757,7 +774,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "new"));
 
     Response response =
@@ -785,7 +801,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
 
@@ -810,7 +825,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
 
@@ -835,7 +849,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
 
@@ -860,7 +873,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
     when(gcsService.deleteDocument("new-upload")).thenReturn(true);
@@ -893,7 +905,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
     when(gcsService.deleteDocument(previousLocation)).thenReturn(true);
@@ -928,7 +939,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
     when(gcsService.deleteDocument("new-upload")).thenReturn(true);
@@ -1171,7 +1181,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     InputStream collaborationInput =
         IOUtils.toInputStream("synthetic collaboration", Charset.defaultCharset());
     FormDataContentDisposition collaborationFile = mock(FormDataContentDisposition.class);
-    when(collaborationFile.getSize()).thenReturn(1L);
     when(collaborationFile.getFileName()).thenReturn("collaboration.txt");
     when(collaborationFile.getType()).thenReturn("text/plain");
     when(gcsService.storeDocument(any(), eq("text/plain"), any()))
@@ -1218,7 +1227,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dataset.setDataUse(new DataUseBuilder().setCollaboratorRequired(true).build());
     when(datasetService.findDatasetById(user, 1)).thenReturn(dataset);
     FormDataContentDisposition collaborationFile = mock(FormDataContentDisposition.class);
-    when(collaborationFile.getSize()).thenReturn(1L);
     when(collaborationFile.getFileName()).thenReturn("collaboration.txt");
     when(collaborationFile.getType()).thenReturn("text/plain");
     when(gcsService.storeDocument(any(), eq("text/plain"), any()))
@@ -1474,7 +1482,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition file = mock(FormDataContentDisposition.class);
     when(file.getFileName()).thenReturn("irb.pdf");
     when(file.getType()).thenReturn("application/pdf");
-    when(file.getSize()).thenReturn(-1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "new-irb"));
 
     resource.populateProgressReportWithDocuments(
@@ -1552,13 +1559,11 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition collabFileDetails = mock(FormDataContentDisposition.class);
     when(collabFileDetails.getFileName()).thenReturn("collab_document.txt");
     when(collabFileDetails.getType()).thenReturn("text/plain");
-    when(collabFileDetails.getSize()).thenReturn(1L);
     InputStream ethicsInputStream =
         IOUtils.toInputStream("ethics content", Charset.defaultCharset());
     FormDataContentDisposition ethicsFileDetails = mock(FormDataContentDisposition.class);
     when(ethicsFileDetails.getFileName()).thenReturn("ethics_document.txt");
     when(ethicsFileDetails.getType()).thenReturn("text/plain");
-    when(ethicsFileDetails.getSize()).thenReturn(1L);
     // Record what each upload stores: a drained stream would store nothing.
     List<String> stored = new ArrayList<>();
     when(gcsService.storeDocument(any(), any(), any()))
@@ -1838,7 +1843,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
 
     Response response =
@@ -1870,7 +1874,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
 
@@ -2356,13 +2359,74 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testApproveCloseout() {
     String referenceId = UUID.randomUUID().toString();
-    doNothing().when(dataAccessRequestService).approveDataAccessRequestCloseout(user, referenceId);
+    doNothing()
+        .when(dataAccessRequestService)
+        .approveDataAccessRequestCloseout(user, referenceId, null);
     when(dataAccessRequestService.findByReferenceId(referenceId))
         .thenReturn(new DataAccessRequest());
     when(datasetService.findDatasetsByIds(user, List.of())).thenReturn(List.of());
-    try (Response response = resource.approveCloseout(duosUser, request, referenceId)) {
+    try (Response response = resource.approveCloseout(duosUser, request, referenceId, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
+  }
+
+  // A closeout names its DAR in the path, so the body needs only the submission date.
+  @Test
+  void testApproveCloseoutPassesTheNamedSubmission() {
+    String referenceId = UUID.randomUUID().toString();
+    when(dataAccessRequestService.findByReferenceId(referenceId))
+        .thenReturn(new DataAccessRequest());
+    try (Response response =
+        resource.approveCloseout(
+            duosUser, request, referenceId, "{\"submissionDate\": 1700000000123}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(dataAccessRequestService)
+        .approveDataAccessRequestCloseout(
+            user, referenceId, new SubmissionApproval(referenceId, 1700000000123L));
+  }
+
+  // A body that names another DAR is passed on as named, and the service refuses it.
+  @Test
+  void testApproveCloseoutPassesTheBodysReferenceId() {
+    String referenceId = UUID.randomUUID().toString();
+    when(dataAccessRequestService.findByReferenceId(referenceId))
+        .thenReturn(new DataAccessRequest());
+    try (Response response =
+        resource.approveCloseout(
+            duosUser,
+            request,
+            referenceId,
+            "{\"referenceId\": \"other\", \"submissionDate\": 1700000000123}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(dataAccessRequestService)
+        .approveDataAccessRequestCloseout(
+            user, referenceId, new SubmissionApproval("other", 1700000000123L));
+  }
+
+  @ParameterizedTest
+  // A body of only a byte order mark reads as JSON null.
+  @ValueSource(
+      strings = {"{\"referenceId\": \"ref\"}", "{\"submissionDate\": null}", "null", "\uFEFF"})
+  void testApproveCloseoutRejectsASubmissionWithoutADate(String body) {
+    try (Response response =
+        resource.approveCloseout(duosUser, request, UUID.randomUUID().toString(), body)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+    verify(dataAccessRequestService, never()).approveDataAccessRequestCloseout(any(), any(), any());
+  }
+
+  // Clients that predate the named submission send {}, which approves as before.
+  @Test
+  void testApproveCloseoutAcceptsAnEmptyBody() {
+    String referenceId = UUID.randomUUID().toString();
+    when(dataAccessRequestService.findByReferenceId(referenceId))
+        .thenReturn(new DataAccessRequest());
+    try (Response response = resource.approveCloseout(duosUser, request, referenceId, " {} ")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(dataAccessRequestService).approveDataAccessRequestCloseout(user, referenceId, null);
   }
 
   @Test
@@ -2370,8 +2434,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     String referenceId = UUID.randomUUID().toString();
     doThrow(BadRequestException.class)
         .when(dataAccessRequestService)
-        .approveDataAccessRequestCloseout(user, referenceId);
-    try (Response response = resource.approveCloseout(duosUser, request, referenceId)) {
+        .approveDataAccessRequestCloseout(user, referenceId, null);
+    try (Response response = resource.approveCloseout(duosUser, request, referenceId, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }

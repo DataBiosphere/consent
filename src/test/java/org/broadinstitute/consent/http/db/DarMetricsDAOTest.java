@@ -465,15 +465,10 @@ class DarMetricsDAOTest extends DAOTestHelper {
     Integer collectionId =
         darCollectionDAO.insertDarCollection(
             "DAR-" + UUID.randomUUID(), user.getUserId(), SUBMITTED);
+    String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        UUID.randomUUID().toString(),
-        user.getUserId(),
-        SUBMITTED,
-        null,
-        SUBMITTED,
-        new DataAccessRequestData(),
-        "era");
+        collectionId, referenceId, user.getUserId(), new DataAccessRequestData(), "era");
+    setDarDates(referenceId, SUBMITTED, null, SUBMITTED);
 
     assertTrue(dao.findDarVolume(FROM, TO, ALL_DACS, 10, 0).isEmpty());
     assertTrue(dao.countDarVolume(FROM, TO, ALL_DACS, "quarter").isEmpty());
@@ -907,7 +902,8 @@ class DarMetricsDAOTest extends DAOTestHelper {
       Integer collectionId, DataAccessRequestData data, Date submitted, Integer... datasetIds) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, user.getUserId(), submitted, submitted, submitted, data, "era");
+        collectionId, referenceId, user.getUserId(), data, "era");
+    setDarDates(referenceId, submitted, submitted, submitted);
     for (Integer datasetId : datasetIds) {
       dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     }
@@ -915,8 +911,12 @@ class DarMetricsDAOTest extends DAOTestHelper {
   }
 
   private Integer election(String dar, Integer dataset, ElectionStatus status, Date on) {
-    return electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(), status.getValue(), on, dar, dataset);
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(), status.getValue(), dar, dataset);
+    // insertElection always writes NOW(), so set the creation time that the test needs.
+    setElectionCreateDate(electionId, on.toInstant());
+    return electionId;
   }
 
   private void decide(String dar, Integer dataset, VoteType type, boolean value, Date on) {
@@ -928,7 +928,8 @@ class DarMetricsDAOTest extends DAOTestHelper {
         electionDAO.findElectionsByReferenceIdAndDatasetId(dar, dataset).stream()
             .map(e -> e.getElectionId())
             .toList();
-    electionDAO.archiveElectionByIds(earlier, on);
+    electionDAO.archiveElectionByIds(earlier);
+    earlier.forEach(id -> setElectionLastUpdate(id, on.toInstant()));
     election(dar, dataset, status, on);
   }
 

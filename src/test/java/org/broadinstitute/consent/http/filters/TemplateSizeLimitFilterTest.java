@@ -14,7 +14,7 @@ import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import org.broadinstitute.consent.http.exceptions.TemplateTooLargeException;
+import org.broadinstitute.consent.http.exceptions.RequestTooLargeException;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.service.studytemplate.StudyTemplateValidationService;
 import org.junit.jupiter.api.Test;
@@ -75,8 +75,8 @@ class TemplateSizeLimitFilterTest {
     InputStream bounded =
         boundedStreamOver(new byte[(int) TemplateSizeLimitFilter.MAX_REQUEST_BYTES + 1], null);
 
-    TemplateTooLargeException e =
-        assertThrows(TemplateTooLargeException.class, bounded::readAllBytes);
+    RequestTooLargeException e =
+        assertThrows(RequestTooLargeException.class, bounded::readAllBytes);
     assertEquals(StudyTemplateValidationService.TOO_LARGE_MESSAGE, e.getMessage());
   }
 
@@ -85,7 +85,7 @@ class TemplateSizeLimitFilterTest {
     InputStream bounded =
         boundedStreamOver(new byte[(int) TemplateSizeLimitFilter.MAX_REQUEST_BYTES + 1], "10");
 
-    assertThrows(TemplateTooLargeException.class, bounded::readAllBytes);
+    assertThrows(RequestTooLargeException.class, bounded::readAllBytes);
   }
 
   @Test
@@ -115,7 +115,7 @@ class TemplateSizeLimitFilterTest {
   void testTheBoundedStreamCountsABodyReadOneByteAtATime() {
     InputStream bounded = boundedStreamOver(oversizeBody(), null);
 
-    assertThrows(TemplateTooLargeException.class, () -> readEveryByte(bounded));
+    assertThrows(RequestTooLargeException.class, () -> readEveryByte(bounded));
   }
 
   @Test
@@ -124,7 +124,7 @@ class TemplateSizeLimitFilterTest {
     InputStream bounded = boundedStreamOver(oversizeBody(), null);
 
     assertThrows(
-        TemplateTooLargeException.class,
+        RequestTooLargeException.class,
         () -> bounded.skip(TemplateSizeLimitFilter.MAX_REQUEST_BYTES + 1));
   }
 
@@ -139,6 +139,22 @@ class TemplateSizeLimitFilterTest {
     // Nothing left to skip, so nothing is counted against the cap.
     bounded.readAllBytes();
     assertEquals(0, bounded.skip(1));
+  }
+
+  @Test
+  void testTheBoundedStreamRefusesMarks() {
+    assertEquals(false, boundedStreamOver(new byte[1], null).markSupported());
+  }
+
+  @Test
+  void testTheBoundedStreamCanNotBeRewound() throws IOException {
+    // The wrapped stream supports marks; the bounded one must not pass them on.
+    InputStream bounded = boundedStreamOver(new byte[] {1, 2, 3}, null);
+
+    bounded.mark(3);
+    assertEquals(1, bounded.read());
+    assertThrows(IOException.class, bounded::reset);
+    assertEquals(2, bounded.read());
   }
 
   private static void readEveryByte(InputStream stream) throws IOException {

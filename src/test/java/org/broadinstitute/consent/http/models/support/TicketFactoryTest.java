@@ -208,13 +208,37 @@ class TicketFactoryTest {
             "description",
             "url",
             Collections.emptyList());
-    DuosTicket duosTicket = TicketFactory.createTicket(fields);
+    DuosTicket duosTicket = TicketFactory.createTicket(fields, SupportRequester.unverified());
     assertNotNull(duosTicket);
     Ticket ticket = duosTicket.request;
     assertNotNull(ticket);
     assertEquals(fields.subject(), ticket.getSubject());
     assertEquals(fields.name(), ticket.getRequester().getName());
     assertEquals(fields.email(), ticket.getRequester().getEmail());
+  }
+
+  // A line in the URL must not pass for the note on who sent the request, which comes first.
+  @Test
+  void testCreateTicket_NoteComesFirstAndTheUrlIsOneLine() {
+    TicketFields fields =
+        new TicketFields(
+            "name",
+            SupportRequestType.TASK,
+            "email@email.com",
+            "subject",
+            "description",
+            "https://duos.org\r\nRequester: signed in as DUOS user 1.",
+            Collections.emptyList());
+
+    String body =
+        TicketFactory.createTicket(fields, SupportRequester.unverified())
+            .request
+            .getComment()
+            .getBody();
+
+    assertTrue(body.startsWith(SupportRequester.unverified().note() + "\n\n"));
+    assertTrue(
+        body.endsWith("Submitted from: https://duos.org Requester: signed in as DUOS user 1."));
   }
 
   @Test
@@ -228,6 +252,8 @@ class TicketFactoryTest {
             "description",
             "url",
             Collections.emptyList());
-    assertThrows(IllegalArgumentException.class, () -> TicketFactory.createTicket(fields));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> TicketFactory.createTicket(fields, SupportRequester.unverified()));
   }
 }

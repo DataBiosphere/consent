@@ -305,8 +305,7 @@ class VoteDAOTest extends DAOTestHelper {
         createDataAccessRequestWithDatasetAndCollectionInfo(
             collectionId, dataset.getDatasetId(), user.getUserId());
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
-    electionDAO.updateElectionById(
-        election.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date());
+    electionDAO.updateElectionById(election.getElectionId(), ElectionStatus.CLOSED.getValue());
     Vote v = createDacVote(user.getUserId(), election.getElectionId());
     boolean voteValue = true;
     updateVote(
@@ -479,14 +478,7 @@ class VoteDAOTest extends DAOTestHelper {
     data.setProjectTitle(randomAlphabetic(10));
     String referenceId = randomAlphanumeric(20);
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        userId,
-        new Date(),
-        new Date(),
-        new Date(),
-        data,
-        randomAlphabetic(10));
+        collectionId, referenceId, userId, data, randomAlphabetic(10));
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
@@ -496,7 +488,6 @@ class VoteDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CANCELED.getValue(),
-            new Date(),
             referenceId,
             datasetId);
     return electionDAO.findElectionById(electionId);
@@ -559,7 +550,6 @@ class VoteDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            new Date(),
             referenceId,
             datasetId);
     return electionDAO.findElectionById(electionId);

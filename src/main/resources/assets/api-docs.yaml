@@ -481,6 +481,8 @@ paths:
       tags:
         - Data Access Request
       responses:
+        400:
+          description: A file over the upload limit (`googleStore.maxUploadBytes`, 25 MB by default).
         200:
           description: Stores the document and returns the updated Data Access Request
           content:
@@ -556,6 +558,8 @@ paths:
       tags:
         - Data Access Request
       responses:
+        400:
+          description: A file over the upload limit (`googleStore.maxUploadBytes`, 25 MB by default).
         200:
           description: Stores the document and returns the updated Data Access Request
           content:
@@ -694,6 +698,8 @@ paths:
     $ref: './paths/draftAttachmentsIndex.yaml'
   /api/draft/v1/{draftUUID}/attachments/{fileId}:
     $ref: './paths/draftAttachments.yaml'
+  /api/support/request:
+    $ref: './paths/supportRequestSignedIn.yaml'
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:

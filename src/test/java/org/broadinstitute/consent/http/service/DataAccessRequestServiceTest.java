@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -84,6 +85,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.IntellectualProperty;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.SubmissionApproval;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
@@ -95,6 +97,7 @@ import org.broadinstitute.consent.http.util.CountryValidator;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import org.jdbi.v3.sqlobject.transaction.TransactionalCallback;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -237,9 +240,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(counterService.getNextDarSequence(counterDAO)).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-    doNothing()
-        .when(dataAccessRequestDAO)
-        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+    doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(), any(), any());
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
     verify(dataAccessRequestDAO)
@@ -267,10 +268,9 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     order.verify(dataAccessRequestDAO).lockCollection(5);
     order.verify(electionDAO).findElectionsByReferenceId(dar.getReferenceId());
     verify(dataAccessRequestDAO, never())
-        .insertDataAccessRequest(any(), any(), any(), any(), any(), any(), any(), any());
+        .insertDataAccessRequest(any(), any(), any(), any(), any());
     verify(dataAccessRequestDAO, never()).updateDraftToSubmittedForCollection(any(), any());
-    verify(dataAccessRequestDAO, never())
-        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+    verify(dataAccessRequestDAO, never()).updateDataByReferenceId(any(), any(), any(), any());
   }
 
   @Test
@@ -555,8 +555,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     ArgumentCaptor<DataAccessRequestData> saved =
         ArgumentCaptor.forClass(DataAccessRequestData.class);
     verify(dataAccessRequestDAO)
-        .updateDataByReferenceId(
-            eq(dar.getReferenceId()), any(), any(), any(), saved.capture(), any());
+        .updateDataByReferenceId(eq(dar.getReferenceId()), any(), saved.capture(), any());
     assertEquals("own-irb", saved.getValue().getIrbDocumentLocation());
     assertEquals("own-irb.pdf", saved.getValue().getIrbDocumentName());
     assertNull(saved.getValue().getCollaborationLetterLocation());
@@ -582,14 +581,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
         .thenReturn(randomInt(1, 100));
     when(dataAccessRequestDAO.insertDataAccessRequest(
-            anyInt(),
-            anyString(),
-            anyInt(),
-            any(Date.class),
-            any(Date.class),
-            any(Date.class),
-            any(DataAccessRequestData.class),
-            anyString()))
+            anyInt(), anyString(), anyInt(), any(DataAccessRequestData.class), anyString()))
         .thenReturn(1);
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
             dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
@@ -603,14 +595,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         ArgumentCaptor.forClass(DataAccessRequestData.class);
     verify(dataAccessRequestDAO)
         .insertDataAccessRequest(
-            anyInt(),
-            insertedReferenceId.capture(),
-            anyInt(),
-            any(Date.class),
-            any(Date.class),
-            any(Date.class),
-            insertedData.capture(),
-            anyString());
+            anyInt(), insertedReferenceId.capture(), anyInt(), insertedData.capture(), anyString());
     assertNull(insertedData.getValue().getIrbDocumentLocation());
     assertNull(insertedData.getValue().getCollaborationLetterLocation());
     verify(dataAccessRequestDAO)
@@ -632,14 +617,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
         .thenReturn(99);
     when(dataAccessRequestDAO.insertDataAccessRequest(
-            anyInt(),
-            anyString(),
-            anyInt(),
-            any(Date.class),
-            any(Date.class),
-            any(Date.class),
-            any(DataAccessRequestData.class),
-            anyString()))
+            anyInt(), anyString(), anyInt(), any(DataAccessRequestData.class), anyString()))
         .thenReturn(12);
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
             dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
@@ -689,14 +667,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
         .thenReturn(randomInt(1, 100));
     when(dataAccessRequestDAO.insertDataAccessRequest(
-            anyInt(),
-            anyString(),
-            anyInt(),
-            any(Date.class),
-            any(Date.class),
-            any(Date.class),
-            any(DataAccessRequestData.class),
-            anyString()))
+            anyInt(), anyString(), anyInt(), any(DataAccessRequestData.class), anyString()))
         .thenReturn(1);
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
             dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
@@ -754,14 +725,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
         .thenReturn(randomInt(1, 100));
     when(dataAccessRequestDAO.insertDataAccessRequest(
-            anyInt(),
-            anyString(),
-            anyInt(),
-            any(Date.class),
-            any(Date.class),
-            any(Date.class),
-            any(DataAccessRequestData.class),
-            anyString()))
+            anyInt(), anyString(), anyInt(), any(DataAccessRequestData.class), anyString()))
         .thenReturn(1);
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
             dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
@@ -1984,9 +1948,7 @@ institution or library cards issued: Internal Collaborator member:  \
     user.setUserId(1);
     user.setLibraryCard(new LibraryCard());
     DataAccessRequest draft = generateDataAccessRequest();
-    doNothing()
-        .when(dataAccessRequestDAO)
-        .insertDraftDataAccessRequest(any(), any(), any(), any(), any());
+    doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(any(), any(), any());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(draft);
     DataAccessRequest dar = service.insertDraftDataAccessRequest(user, draft);
     assertNotNull(dar);
@@ -2778,12 +2740,146 @@ institution or library cards issued: Internal Collaborator member:  \
     when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
     when(dataAccessRequestDAO.findByReferenceId(closeout.dar.referenceId)).thenReturn(closeout.dar);
     when(dacService.findByDatasetId(closeout.dar().getDatasetIds())).thenReturn(Set.of(dac));
+    mockDarTransaction();
     assertDoesNotThrow(
         () ->
             service.approveDataAccessRequestCloseout(
-                closeout.actor, closeout.dar.getReferenceId()));
+                closeout.actor, closeout.dar.getReferenceId(), null));
+    InOrder order = inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).lockDataAccessRequest(closeout.dar.getReferenceId());
+    order.verify(dataAccessRequestDAO).findByReferenceId(closeout.dar.getReferenceId());
+    order
+        .verify(dataAccessRequestDAO)
+        .updateDarApprovalSO(closeout.actor.getUserId(), closeout.dar.getReferenceId());
     verify(dacService).findByDatasetId(closeout.dar().getDatasetIds());
     verify(emailService).sendMessage(any(SubmittedCloseoutMessage.class), any());
+  }
+
+  // The official approves the submission they reviewed, named by its submission date.
+  @Test
+  void approveCloseoutForTheNamedSubmission() {
+    CloseoutWithUserAndSigningOfficialApproval closeout =
+        new CloseoutWithUserAndSigningOfficialApproval();
+    when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
+    when(dataAccessRequestDAO.findByReferenceId(closeout.dar.referenceId)).thenReturn(closeout.dar);
+    mockDarTransaction();
+
+    service.approveDataAccessRequestCloseout(
+        closeout.actor,
+        closeout.dar.getReferenceId(),
+        new SubmissionApproval(
+            closeout.dar.getReferenceId(), closeout.dar.getSubmissionDate().getTime()));
+
+    verify(dataAccessRequestDAO)
+        .updateDarApprovalSO(closeout.actor.getUserId(), closeout.dar.getReferenceId());
+  }
+
+  @Test
+  void approveCloseoutRejectsADifferentSubmission() {
+    CloseoutWithUserAndSigningOfficialApproval closeout =
+        new CloseoutWithUserAndSigningOfficialApproval();
+    when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
+    when(dataAccessRequestDAO.findByReferenceId(closeout.dar.referenceId)).thenReturn(closeout.dar);
+    mockDarTransaction();
+    SubmissionApproval reviewed =
+        new SubmissionApproval(
+            closeout.dar.getReferenceId(), closeout.dar.getSubmissionDate().getTime() - 1);
+
+    String referenceId = closeout.dar.getReferenceId();
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDataAccessRequestCloseout(closeout.actor, referenceId, reviewed));
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+    verifyNoInteractions(emailService);
+  }
+
+  // Clients that predate the named submission send {}, which approves as before.
+  @Test
+  void approveCloseoutWithAnEmptySubmission() {
+    CloseoutWithUserAndSigningOfficialApproval closeout =
+        new CloseoutWithUserAndSigningOfficialApproval();
+    when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
+    when(dataAccessRequestDAO.findByReferenceId(closeout.dar.referenceId)).thenReturn(closeout.dar);
+    mockDarTransaction();
+
+    service.approveDataAccessRequestCloseout(
+        closeout.actor, closeout.dar.getReferenceId(), new SubmissionApproval(null, null));
+
+    verify(dataAccessRequestDAO)
+        .updateDarApprovalSO(closeout.actor.getUserId(), closeout.dar.getReferenceId());
+  }
+
+  @Test
+  void approveCloseoutRejectsAnotherDar() {
+    CloseoutWithUserAndSigningOfficialApproval closeout =
+        new CloseoutWithUserAndSigningOfficialApproval();
+    when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
+    when(dataAccessRequestDAO.findByReferenceId(closeout.dar.referenceId)).thenReturn(closeout.dar);
+    mockDarTransaction();
+    SubmissionApproval reviewed =
+        new SubmissionApproval("another", closeout.dar.getSubmissionDate().getTime());
+
+    String referenceId = closeout.dar.getReferenceId();
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDataAccessRequestCloseout(closeout.actor, referenceId, reviewed));
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  @Test
+  void approveCloseoutOfAMissingRequestIsNotFound() {
+    String referenceId = UUID.randomUUID().toString();
+    mockDarTransaction();
+
+    User user = new User();
+    assertThrows(
+        NotFoundException.class,
+        () -> service.approveDataAccessRequestCloseout(user, referenceId, null));
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  @Test
+  void approveCloseoutWhileTheRowIsLockedIsConflict() {
+    String referenceId = UUID.randomUUID().toString();
+    mockDarTransaction();
+    doThrow(
+            new UnableToExecuteStatementException(
+                "lock", new SQLException("deadlock detected", "40P01"), null))
+        .when(dataAccessRequestDAO)
+        .lockDataAccessRequest(referenceId);
+
+    User user = new User();
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDataAccessRequestCloseout(user, referenceId, null));
+  }
+
+  @Test
+  void approveCloseoutRethrowsOtherDatabaseErrors() {
+    String referenceId = UUID.randomUUID().toString();
+    mockDarTransaction();
+    UnableToExecuteStatementException failure =
+        new UnableToExecuteStatementException("lock", new SQLException("broken", "08006"), null);
+    doThrow(failure).when(dataAccessRequestDAO).lockDataAccessRequest(referenceId);
+
+    User user = new User();
+    assertSame(
+        failure,
+        assertThrows(
+            UnableToExecuteStatementException.class,
+            () -> service.approveDataAccessRequestCloseout(user, referenceId, null)));
+  }
+
+  /** Runs the DAR DAO's transaction callback on the mock itself. */
+  private void mockDarTransaction() {
+    doAnswer(
+            invocation -> {
+              TransactionalCallback<?, DataAccessRequestDAO, Exception> callback =
+                  invocation.getArgument(0);
+              return callback.inTransaction(dataAccessRequestDAO);
+            })
+        .when(dataAccessRequestDAO)
+        .inTransaction(any());
   }
 
   private DataAccessRequest getMockedDar(String darCode, String referenceId, User user) {

@@ -3,15 +3,21 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import jakarta.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
+import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +26,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -32,7 +41,9 @@ public class SupportResourceTest extends ResourceTest {
 
   @BeforeEach
   public void setUp() {
-    supportResource = new SupportResource(supportRequestService);
+    StoreConfiguration storeConfiguration = new StoreConfiguration();
+    storeConfiguration.setMaxUploadBytes(4);
+    supportResource = new SupportResource(supportRequestService, storeConfiguration);
   }
 
   @ParameterizedTest
@@ -54,9 +65,36 @@ public class SupportResourceTest extends ResourceTest {
         }
         """
             .formatted(type);
-    when(supportRequestService.postTicketToSupport(any())).thenReturn(new JsonObject());
+    when(supportRequestService.submitTicket(any(), any())).thenReturn(new JsonObject());
     try (Response response = supportResource.postRequest(body)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    }
+  }
+
+  @Test
+  void testAnOpenRequestIsMarkedUnverified() throws Exception {
+    String body =
+        """
+        {"name": "Ada", "email": "ada@example.org", "subject": "Help", "description": "Hi",
+         "type": "QUESTION", "url": "https://example.com"}
+        """;
+    when(supportRequestService.submitTicket(any(), any())).thenReturn(new JsonObject());
+
+    try (Response response = supportResource.postRequest(body)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    }
+    ArgumentCaptor<SupportRequester> requester = ArgumentCaptor.forClass(SupportRequester.class);
+    verify(supportRequestService).submitTicket(any(), requester.capture());
+    assertEquals(SupportRequester.unverified(), requester.getValue());
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(
+      strings = {" ", "null", "[]", "123", "{\"uploads\": \"x\"}", "{\"type\": \"BOGUS\"}"})
+  void testAnEmptyOrMalformedRequestIsABadRequest(String body) {
+    try (Response response = supportResource.postRequest(body)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 
@@ -142,7 +180,7 @@ public class SupportResourceTest extends ResourceTest {
   void testUnprocessableTicket() throws Exception {
     doThrow(new UnprocessableEntityException("Unprocessable"))
         .when(supportRequestService)
-        .postTicketToSupport(any());
+        .submitTicket(any(), any());
     try (Response response =
         supportResource.postRequest(
             """
@@ -165,9 +203,27 @@ public class SupportResourceTest extends ResourceTest {
     JsonObject obj = new JsonObject();
     obj.add("token", new JsonPrimitive("token value"));
     when(supportRequestService.postAttachmentToSupport(any())).thenReturn(obj);
-    try (Response response = supportResource.postUpload("test".getBytes())) {
+    try (Response response = supportResource.postUpload(body("test"))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
+    // The whole attachment, at the limit, goes to support.
+    verify(supportRequestService).postAttachmentToSupport("test".getBytes());
+  }
+
+  // Past the limit the attachment is a 400, read no further than one byte past it, and never sent.
+  @Test
+  void testPostUploadOverTheLimit() throws Exception {
+    InputStream body = body("tests and more");
+
+    try (Response response = supportResource.postUpload(body)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+    assertEquals(" and more", new String(body.readAllBytes()));
+    verify(supportRequestService, never()).postAttachmentToSupport(any());
+  }
+
+  private static InputStream body(String content) {
+    return new ByteArrayInputStream(content.getBytes());
   }
 
   @Test
@@ -175,7 +231,7 @@ public class SupportResourceTest extends ResourceTest {
     doThrow(new UnprocessableEntityException("Unprocessable"))
         .when(supportRequestService)
         .postAttachmentToSupport(any());
-    try (Response response = supportResource.postUpload("test".getBytes())) {
+    try (Response response = supportResource.postUpload(body("test"))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
     }
   }

@@ -7,6 +7,7 @@ import java.util.List;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
+import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
@@ -40,7 +41,8 @@ class SupportRequestServiceIntegrationTest {
                 "Test Subject",
                 "Test Description",
                 "Test URL",
-                List.of(token)));
+                List.of(token)),
+            SupportRequester.unverified());
     JsonObject request = service.postTicketToSupport(ticket);
     assertNotNull(request);
   }

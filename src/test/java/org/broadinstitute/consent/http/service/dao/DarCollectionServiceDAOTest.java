@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -247,9 +249,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
                     .forEach(
                         e ->
                             electionDAO.updateElectionById(
-                                e.getElectionId(),
-                                ElectionStatus.CANCELED.getValue(),
-                                FIXED_DATE)));
+                                e.getElectionId(), ElectionStatus.CANCELED.getValue())));
 
     List<Integer> canceledElectionIds =
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId())).stream()
@@ -305,6 +305,40 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   }
 
   /**
+   * NOW() is the transaction start time. A transaction that waits on the collection lock can give
+   * the new election an earlier create_date than the archived election. The votes must still go to
+   * the new election, which has the highest election_id.
+   */
+  @Test
+  void testCreateElectionsForDarByUserPutsVotesOnNewestElectionWhenOldElectionIsLater() {
+    DarCollection collection = setUpDarCollectionWithDacDataset();
+    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElseThrow();
+    Integer datasetId = dar.getDatasetIds().getFirst();
+    Dac dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst().orElseThrow();
+    User chair =
+        dacDAO.findMembersByDacId(dac.getDacId()).stream()
+            .filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON))
+            .findFirst()
+            .orElseThrow();
+
+    serviceDAO.createElectionsForDarByUser(chair, dar);
+    Election oldElection =
+        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId())).getFirst();
+    electionDAO.updateElectionById(oldElection.getElectionId(), ElectionStatus.CANCELED.getValue());
+    setElectionCreateDate(oldElection.getElectionId(), Instant.now().plus(1, ChronoUnit.DAYS));
+    int oldVoteCount = voteDAO.findVotesByElectionIds(List.of(oldElection.getElectionId())).size();
+
+    serviceDAO.createElectionsForDarByUser(chair, dar);
+
+    Election newElection =
+        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId())).getFirst();
+    assertNotEquals(oldElection.getElectionId(), newElection.getElectionId());
+    assertFalse(voteDAO.findVotesByElectionIds(List.of(newElection.getElectionId())).isEmpty());
+    assertEquals(
+        oldVoteCount, voteDAO.findVotesByElectionIds(List.of(oldElection.getElectionId())).size());
+  }
+
+  /**
    * When an election insert fails after the archive of the old elections, the whole transaction
    * rolls back, so the old elections stay unarchived.
    */
@@ -326,8 +360,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
     assertEquals(1, canceledElections.size());
     Integer canceledElectionId = canceledElections.getFirst().getElectionId();
-    electionDAO.updateElectionById(
-        canceledElectionId, ElectionStatus.CANCELED.getValue(), FIXED_DATE);
+    electionDAO.updateElectionById(canceledElectionId, ElectionStatus.CANCELED.getValue());
     assertFalse(electionDAO.findElectionById(canceledElectionId).getArchived());
 
     // Reject every new election for this DAR, so the insert fails after the archive runs.
@@ -397,12 +430,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(
         dar.getReferenceId(), dacAndDataset2.dataset.getDatasetId());
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(),
-        dar.getUserId(),
-        FIXED_DATE,
-        FIXED_DATE,
-        dar.getData(),
-        user.getEraCommonsId());
+        dar.getReferenceId(), dar.getUserId(), dar.getData(), user.getEraCommonsId());
     return darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
   }
 
@@ -443,11 +471,11 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
-    dataAccessRequestDAO.insertDraftDataAccessRequest(
-        dar.getReferenceId(), user.getUserId(), FIXED_DATE, FIXED_DATE, data);
+    dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getUserId(), data);
     dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, dar.getReferenceId());
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.referenceId, dar.userId, FIXED_DATE, FIXED_DATE, data, user.getEraCommonsId());
+        dar.referenceId, dar.userId, data, user.getEraCommonsId());
+    setDarDates(dar.getReferenceId(), FIXED_DATE, FIXED_DATE, FIXED_DATE);
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
   }
 

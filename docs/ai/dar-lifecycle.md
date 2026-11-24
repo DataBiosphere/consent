@@ -82,11 +82,17 @@ failure to record is logged and doesn't fail the request.
   `updateDraftToSubmittedForCollection` when submitting an existing draft, or
   `insertDataAccessRequest` when there is no draft. It also syncs `dar_dataset`, snapshots DAAs,
   and flags `requires_so_approval` when needed.
-- Every write to `submission_date`: those two, `insertProgressReport` (`now()`), and
-  `updateDataByReferenceId`, which resubmit calls with `NULL`. Draft edits
+- Every write to `submission_date`: those two and `insertProgressReport` write `NOW()`, and
+  `updateDataToDraftByReferenceId`, which resubmit calls, writes `NULL`. No `DataAccessRequestDAO`
+  write binds a create, update or submission date from Java, so `submission_date` is on the
+  database clock. Compare it only with dates the database wrote, as
+  `DarCollectionService.hasCurrentElection` does with an election's `create_date`, which
+  `ElectionDAO` writes with `NOW()`.
+  `updateDataByReferenceId` doesn't change `submission_date`. Draft edits
   (`DataAccessRequestServiceDAO.updateByReferenceId`) don't write it: they update only rows where
   `submission_date IS NULL` and fail with 422 otherwise, so an edit that races a submit can't turn
   the submitted DAR back into a draft. They also fail with 409 on a draft that has elections.
+  They still write `update_date` from Java until DT-2939.
 - Elections are per (DAR reference id, dataset). A chair opens them
   (`DarCollectionService.createElectionsForDarCollection`), or auto-open DACs and DAC automation
   rules open them (`createElectionsForNewDarCollection`, `DACAutomationRuleService`). None of
@@ -117,8 +123,9 @@ failure to record is logged and doesn't fail the request.
   DAR whose submission date changed while the approval waited for the collection lock (409).
   A collection approval names the submission the official reviewed (`SubmissionApproval`: the
   latest DAR's reference id and submission date); a different submission under the collection
-  lock is a 409. Until every client sends it, a request without it (no body or `{}`) is accepted
-  and logged.
+  lock is a 409. A closeout approval names its DAR in the path, so its body needs only the
+  submission date; it is compared under the DAR's row lock. Until every client sends it, a
+  request without it (no body or `{}`) is accepted and logged.
   DAC automation rules skip a DAR that needs signing official approval and doesn't have it
   (`DACAutomationRuleService.triggerDACRuleSettings`). Submission also defers auto-open elections
   and DAC notices for that DAR; the approval runs the rules, then opens those elections and sends

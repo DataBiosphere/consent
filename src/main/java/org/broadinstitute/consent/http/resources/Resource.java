@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
@@ -154,6 +155,8 @@ public abstract class Resource implements ConsentLogger {
                 .type(MediaType.APPLICATION_JSON)
                 .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
                 .build());
+    // The dispatch matches exact classes, so the subclass needs its own entry.
+    DISPATCH.put(UploadTooLargeException.class, DISPATCH.get(BadRequestException.class));
     DISPATCH.put(
         MalformedJsonException.class,
         e ->
@@ -299,27 +302,46 @@ public abstract class Resource implements ConsentLogger {
 
   /**
    * Reads the submission a signing official's approval names. Clients that predate it send no body
-   * or {}, which reads as null or empty.
+   * or {}, which reads as null.
    */
   protected SubmissionApproval readSubmissionApproval(String body) {
+    return readSubmissionApproval(body, null);
+  }
+
+  /**
+   * Reads the submission an approval names when the path names its DAR, so the body may give only
+   * the submission date.
+   *
+   * @param pathReferenceId The DAR the path names; null when the body must name it
+   */
+  protected SubmissionApproval readSubmissionApproval(String body, String pathReferenceId) {
+    String unnamed =
+        pathReferenceId == null
+            ? "Name the approved submission with its referenceId and submissionDate"
+            : "Name the approved submission with its submissionDate";
     if (body == null || body.isBlank()) {
       return null;
     }
-    // An unknown or misspelled key would otherwise read as {}, which approves as before.
+    // A JSON null fails here: it isn't an object. A body of only a byte order mark reads as null.
     JsonObject fields = STRICT_GSON.fromJson(body, JsonObject.class);
-    if (fields != null && !Set.of("referenceId", "submissionDate").containsAll(fields.keySet())) {
+    if (fields == null) {
+      throw new BadRequestException(unnamed);
+    }
+    // Only what clients that predate the named submission send, {}, approves without it.
+    if (fields.isEmpty()) {
+      return null;
+    }
+    // An unknown or misspelled key would otherwise go unchecked.
+    if (!Set.of("referenceId", "submissionDate").containsAll(fields.keySet())) {
       throw new BadRequestException("Only referenceId and submissionDate name the submission");
     }
     // Read from the text: a parsed tree would truncate a fractional or overflowing date.
     SubmissionApproval approval = STRICT_GSON.fromJson(body, SubmissionApproval.class);
-    if (approval == null || approval.isEmpty()) {
-      return approval;
+    String referenceId = approval.referenceId() == null ? pathReferenceId : approval.referenceId();
+    if (approval.submissionDate() == null || referenceId == null) {
+      throw new BadRequestException(unnamed);
     }
-    if (approval.submissionDate() == null || approval.referenceId() == null) {
-      throw new BadRequestException(
-          "Name the approved submission with its referenceId and submissionDate");
-    }
-    return approval;
+    return new SubmissionApproval(referenceId, approval.submissionDate());
   }
 
   protected void validateFileDetails(ContentDisposition contentDisposition) {
@@ -330,13 +352,8 @@ public abstract class Resource implements ConsentLogger {
     if (!validName) {
       throw new IllegalArgumentException("File name is invalid");
     }
-    boolean validSize = validator.getMaxFileUploadSize() >= contentDisposition.getSize();
-    if (!validSize) {
-      throw new IllegalArgumentException(
-          "File size is invalid. Max size is: "
-              + validator.getMaxFileUploadSize() / 1000000
-              + " MB");
-    }
+    // Size is checked as the upload streams to storage (GCSService.storeDocument): browsers don't
+    // declare it.
   }
 
   /**

@@ -80,7 +80,8 @@ abstract class DarLifecycleDAOTestHelper extends DAOTestHelper {
     Date on = Date.from(submitted);
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, user.getUserId(), on, on, on, data, "era");
+        collectionId, referenceId, user.getUserId(), data, "era");
+    setDarDates(referenceId, on, on, on);
     for (Integer datasetId : datasetIds) {
       dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     }
@@ -131,7 +132,7 @@ abstract class DarLifecycleDAOTestHelper extends DAOTestHelper {
 
   protected Integer election(String referenceId, Integer datasetId, ElectionStatus status) {
     return electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(), status.getValue(), new Date(), referenceId, datasetId);
+        ElectionType.DATA_ACCESS.getValue(), status.getValue(), referenceId, datasetId);
   }
 
   /** Closes a new election with a final vote cast {@code on}; null leaves the vote undated. */

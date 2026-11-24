@@ -46,14 +46,8 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setStatus("Canceled");
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        user.getUserId(),
-        FIXED_DATE,
-        FIXED_DATE,
-        FIXED_DATE,
-        data,
-        "era-commons-id");
+        collectionId, referenceId, user.getUserId(), data, "era-commons-id");
+    setDarDates(referenceId, FIXED_DATE, FIXED_DATE, FIXED_DATE);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
 
     DashboardDatabaseCounts counts =
@@ -77,7 +71,6 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, voteType.getValue());
@@ -99,7 +92,6 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, VoteType.FINAL.getValue());
@@ -274,14 +266,8 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
       Date submissionDate) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        user.getUserId(),
-        FIXED_DATE, // createDate
-        submissionDate,
-        FIXED_DATE, // updateDate
-        data,
-        "era-commons-id");
+        collectionId, referenceId, user.getUserId(), data, "era-commons-id");
+    setDarDates(referenceId, FIXED_DATE, submissionDate, FIXED_DATE);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     return referenceId;
   }
@@ -319,7 +305,6 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, VoteType.FINAL.getValue());

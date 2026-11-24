@@ -144,15 +144,10 @@ class DarSoApprovalMetricsDAOTest extends DAOTestHelper {
     String first = createDar(legacy);
     Integer collectionId = dataAccessRequestDAO.findByReferenceId(first).getCollectionId();
     Date later = Date.from(legacy.plusSeconds(60));
+    String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        UUID.randomUUID().toString(),
-        user.getUserId(),
-        later,
-        later,
-        later,
-        new DataAccessRequestData(),
-        "era");
+        collectionId, referenceId, user.getUserId(), new DataAccessRequestData(), "era");
+    setDarDates(referenceId, later, later, later);
 
     SoApproval row = only();
     assertEquals(first, row.referenceId());
@@ -273,7 +268,8 @@ class DarSoApprovalMetricsDAOTest extends DAOTestHelper {
         darCollectionDAO.insertDarCollection("DAR-" + UUID.randomUUID(), user.getUserId(), on);
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, user.getUserId(), on, on, on, data, "era");
+        collectionId, referenceId, user.getUserId(), data, "era");
+    setDarDates(referenceId, on, on, on);
     return referenceId;
   }
 

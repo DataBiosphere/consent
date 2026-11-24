@@ -100,14 +100,8 @@ class DraftSubmitLockTest extends DAOTestHelper {
         darCollectionDAO.insertDarCollection(uniqueDarCode(), user.getUserId(), new Date());
     String referenceId = randomAlphanumeric(10);
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        user.getUserId(),
-        new Date(),
-        null,
-        new Date(),
-        new DataAccessRequestData(),
-        null);
+        collectionId, referenceId, user.getUserId(), new DataAccessRequestData(), null);
+    setDarSubmissionDate(referenceId, null);
     return new Draft(collectionId, referenceId);
   }
 
