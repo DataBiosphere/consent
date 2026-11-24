@@ -15,7 +15,9 @@ import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
+import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
+import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -82,6 +84,21 @@ public class SupportRequestService implements ConsentLogger {
    * @throws Exception The exception
    */
   public JsonObject postTicketToSupport(DuosTicket ticket) throws Exception {
+    return postTicket(ticket);
+  }
+
+  /**
+   * Builds the ticket, noting who sent it, and sends it to Zendesk. Shared by the open and the
+   * signed-in support routes.
+   */
+  public JsonObject submitTicket(TicketFields ticketFields, SupportRequester requester)
+      throws Exception {
+    DuosTicket ticket = TicketFactory.createTicket(ticketFields, requester);
+    logInfo("Support Request Ticket: " + ticket);
+    return postTicket(ticket);
+  }
+
+  private JsonObject postTicket(DuosTicket ticket) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
       ByteArrayContent content =

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
@@ -26,6 +27,7 @@ import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
+import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
@@ -67,6 +69,39 @@ class SupportRequestServiceTest extends WireMockTestHelper {
         exactly(1),
         postRequestedFor(urlPathEqualTo(supportUrl.getPath()))
             .withRequestBody(equalTo(expectedBody)));
+  }
+
+  @Test
+  void testSubmitTicketSendsTheTicketWithTheRequesterNote() throws Exception {
+    TicketFields fields =
+        new TicketFields(
+            "Ada",
+            SupportRequestType.QUESTION,
+            "ada@example.org",
+            "Help",
+            "Hi",
+            "https://example.com",
+            List.of());
+    String expectedBody =
+        TicketFactory.createTicket(fields, SupportRequester.unverified()).toString();
+    when(config.isActivateSupportNotifications()).thenReturn(true);
+    when(config.postSupportRequestUrl()).thenReturn(mockServerBaseUrl() + "/");
+    wireMockServer.stubFor(
+        post(anyUrl())
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withStatus(HttpStatusCodes.STATUS_CODE_CREATED)
+                    .withBody(expectedBody)));
+
+    service.submitTicket(fields, SupportRequester.unverified());
+
+    // Checked directly too, since the expected body comes from the same factory.
+    wireMockServer.verify(
+        exactly(1),
+        postRequestedFor(anyUrl())
+            .withRequestBody(equalTo(expectedBody))
+            .withRequestBody(containing("Requester: not signed in.")));
   }
 
   @Test
@@ -202,6 +237,7 @@ class SupportRequestServiceTest extends WireMockTestHelper {
             randomAlphabetic(10),
             randomAlphabetic(10),
             randomAlphabetic(10),
-            List.of(randomAlphanumeric(10))));
+            List.of(randomAlphanumeric(10))),
+        SupportRequester.unverified());
   }
 }
