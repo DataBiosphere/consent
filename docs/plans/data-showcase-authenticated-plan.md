@@ -129,8 +129,7 @@ identity".
 - **Subscriptions tied to the account (E7).** A signed-in subscriber removes anonymous enrollment
   from S7.1's first release. S7.1 still needs its decisions on verification and on unsubscribing,
   including unsubscribing from an email link while signed out.
-- **Identified analytics (S5.2).** S5.2 already links anonymous and signed-in events through
-  sign-in. Signed-in shelves mean every dataset-card event has a user.
+- **Identified analytics (S5.2).** S5.2 plans to carry attribution through sign-in. Signed-in shelves mean every dataset-card event has a user.
 
 ### Not an opportunity
 
@@ -195,7 +194,7 @@ Decisions for the product owner (Jonathan Lawson):
 | Request caps (body size, identifier count, ranking limit) | Kept on the new route: a signed-in caller can still send a large request. |
 | `RateLimitFilter` | Applies to the new route where `rateLimit.enabled` is on. It is one budget per user across all of `api/`. Check each environment's value in terra-helmfile before launch. |
 | `PublicShowcaseCatalogResource`, `ShowcaseConfiguration` | Kept, with the resource unregistered (`showcase.publicLookupEnabled` off). |
-| `PublicRateLimitFilter`, the `rateLimit.showcase` block, `SignedClientIpVerifier`, `ClientIpResolver` | Kept. The filter is registered whatever the switch says and still limits `showcase/*` by IP. Remove only if option A is dropped, and keep the signed client IP if another anonymous route uses it by then ([DT-4496](https://broadworkbench.atlassian.net/browse/DT-4496) signs support requests in duos-ui; the Consent side is not merged). |
+| `PublicRateLimitFilter`, the `rateLimit.showcase` block, `SignedClientIpVerifier`, `ClientIpResolver` | Kept. The filter is registered whatever the switch says and still limits `showcase/*` by IP. Remove only if option A is dropped, and keep the signed client IP if another anonymous route uses it by then ([DT-4496](https://broadworkbench.atlassian.net/browse/DT-4496) signs support requests in duos-ui, but no Consent route other than `showcase/*` reads the signed client IP yet). |
 
 ### terra-helmfile
 
