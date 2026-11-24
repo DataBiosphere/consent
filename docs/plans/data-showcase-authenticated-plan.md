@@ -21,15 +21,19 @@ The ticket asks what becomes possible if the showcase reads its data through the
 
 Short answer:
 
-- **It removes the gate that blocks launch.** Every field the anonymous lookup returns is already
-  returned to any signed-in user for a public study. An authenticated lookup with the same fields
-  shows a signed-in user nothing new, so it does not need the S2.1 field approval that holds
-  [DT-4466](https://broadworkbench.atlassian.net/browse/DT-4466).
-- **It retires most of the anonymous-only machinery**: the public rate limit, the BFF public proxy
-  route, the `/showcase/*` CORS and CSP allowances and the separate lookup URL settings.
-- **It enables per-user features** that an anonymous page cannot have: access and request state on
-  dataset cards, subscriptions tied to an account, and catalog asset records on resource cards.
+- **It shrinks the gate that blocks launch.** Eight of the nine S2.1 fields are already readable by
+  a signed-in researcher for a public study. The ninth, `availableDate`, is new for controlled
+  datasets: it is the DAC approval date, which no endpoint returns today. Behind sign-in, the S2.1
+  approval that holds [DT-4466](https://broadworkbench.atlassian.net/browse/DT-4466) narrows to that
+  one field and to how the fields are presented.
+- **It makes the anonymous-only machinery removable**, if the public lookup is later dropped: the
+  public rate limit, the BFF public proxy route, the `/showcase/*` CORS and CSP allowances and the
+  separate lookup URL settings.
 - **The cost is reach.** A visitor without a DUOS account cannot see live dataset cards.
+
+Per-user features (access state on cards, account subscriptions, identified analytics) are possible
+under every option: a public page can still read the signed-in user's own data. They are listed in
+section 5 because they get easier, not because they need sign-in.
 
 The recommendation (section 6) keeps the showcase pages public and shows the dataset shelves and
 live counts only to signed-in visitors.
@@ -53,21 +57,32 @@ The MVP is built but not live:
 
 ## 3. What a signed-in user can already see
 
-`OAuthCustomAuthFilter` requires a signed-in user for every `api/` path. These existing endpoints
-return dataset and study data to any signed-in user, with no role:
+`OAuthCustomAuthFilter` requires a signed-in user for every `api/` path. Self-registration gives a
+new user the Researcher role. These existing endpoints return dataset, study and DAC data to such a
+user:
 
 | Endpoint | Visibility rule | What it returns |
 | --- | --- | --- |
-| `GET /api/dataset/v2/{id}`, `GET /api/dataset/registration/{identifier}`, `GET /api/dataset/batch` | `DatasetService.verifyPublicVisibilityAccess`: public study, or the user is an admin, the creator or a custodian | The full `Dataset`, with its `Study`: description, PI name and email, data types, every dataset and study property (including `species` and `numberOfParticipants`), the DAC id and `dacApproval` |
+| `GET /api/dataset/v2/{id}` | `DatasetService.verifyPublicVisibilityAccess`: public study, or the user is an admin, the creator or a custodian. A dataset with no study is readable by any signed-in user. | The full `Dataset` with its `Study`: description, PI name and email, data types, every dataset and study property (including `species` and `numberOfParticipants`), `dacId` and `dacApproval` |
 | `GET /api/dataset/study/{id}` and `/{id}/datasets` | `DatasetService.canReadStudy` (same rule) | The full `Study` and its datasets |
-| `GET /api/asset-catalog/{identifier}` | `AssetLookupService`: a readable study or dataset | The asset's catalog fields |
-| `GET /api/dar/v2` | The caller's own requests | Each request with its datasets and state |
+| `GET /api/dataset/batch` | Same rule, per dataset | Datasets without their study |
+| `GET /api/dataset/registration/{identifier}` | Same rule | The registration form (`DatasetRegistrationSchemaV1`), not the `Dataset` |
+| `GET /api/dac` | Roles: admin, member, chair, researcher | Every DAC, with its name |
 
-The nine fields of the S2.1 projection (`ShowcasePublicField`) are a subset of what the first row
-returns for a public study. The showcase eligibility rule is narrower than `verifyPublicVisibilityAccess`:
-it also needs open or external access, or DAC approval with a live DAC, and it grants no admin,
-creator or custodian exception. So an authenticated lookup that keeps both the projection and the
-eligibility rule cannot show a signed-in user anything they cannot already read.
+Against the S2.1 projection (`ShowcasePublicField`):
+
+| Field | Already readable by a signed-in researcher? |
+| --- | --- |
+| `identifier`, `title`, `accessManagement`, `consentCodes`, `participantCount`, `accessUrl`, `species` | Yes, from `GET /api/dataset/v2/{id}` |
+| `dacName` | Yes, by joining the dataset's `dacId` to `GET /api/dac` |
+| `availableDate` | Open and external datasets: yes (`createDate`). **Controlled datasets: no.** It is `dataset.dac_approval_date`, which only the showcase queries and the NewStudyDigest email read. The newest ranking orders by it, so the order also reveals it. |
+
+The showcase eligibility rule is narrower than `verifyPublicVisibilityAccess`. It needs a public
+study, so datasets without a study are excluded. It also needs open or external access, or DAC
+approval with a live DAC, and it grants no admin, creator or custodian exception.
+
+A signed-in user is not a trusted reader. Moving the lookup behind sign-in limits who can call it;
+it does not make new fields safe to return.
 
 **Not a safe base: the Data Library search.** `POST /api/dataset/search/index` and `/v2` pass the
 caller's Elasticsearch query to the index unchanged. The `study.publicVisibility` filter is added by
@@ -84,7 +99,7 @@ reads from the search endpoints, and the post-MVP rule "never the authenticated 
 | Hero, copy, tools, workspaces | Everyone | Everyone | Signed-in users |
 | Dataset shelves and hero counts | Everyone | Signed-in users; others see a sign-in prompt | Signed-in users |
 | Consent lookup | `POST /showcase/datasets`, anonymous | `POST /api/showcase/datasets` | `POST /api/showcase/datasets` |
-| Launch gate | DT-4466 field approval | AppSec confirms section 3 | AppSec confirms section 3 |
+| Launch gate | DT-4466: all S2.1 fields, `species`, `scope` | The controlled-dataset `availableDate`, and the stewards' presentation questions | Same as B |
 | Reach | Anyone with the link | Anyone sees the program; datasets need an account | Account needed for everything |
 
 Signing in to DUOS for the first time creates an account and asks the user to accept the terms of
@@ -93,50 +108,68 @@ identity".
 
 ## 5. Opportunities and costs
 
-### Opportunities (B and C)
+### Opportunities that need sign-in (B and C)
 
-- **Launch without the field approval.** AppSec confirms that the authenticated lookup returns a
-  subset of section 3. That is a smaller question than approving an anonymous exposure, and the
-  `species` decision can wait for option A.
-- **Wider cards without new approval.** Fields that are already visible to signed-in users, such as
-  the study description or data types, could be added to the projection. Each one is still a product
-  choice, and the projection stays an allowlist.
-- **Less to run.** The anonymous-only pieces in section 7 can be retired, and the existing per-user
-  `RateLimitFilter` applies to the new route.
-- **Personal card state.** A card can say "You have access", "Request in progress" or "Request
-  access", from the user's own requests (`GET /api/dar/v2`). This also gives E8's instant-approval
-  shelf a per-user answer instead of a generic one.
-- **Subscriptions tied to the account (E7).** S7.1 no longer has to design anonymous enrollment,
-  double opt-in or public token routes for the first release: a signed-in user subscribes, and the
-  existing account email is the channel.
-- **Catalog asset records on resource cards.** The contracts record rejected reusing
-  `DUOS-W-` and `DUOS-M-` records in S3.4 because "every route that returns asset fields needs a
-  signed-in user". With a signed-in page, `GET /api/asset-catalog/{identifier}` can supply registered
-  workspaces and AI models (the `ai-models` section, R2).
-- **Identified analytics (S5.2).** Showcase events can follow a user from a card to a request, not
-  only an anonymous id.
+- **A smaller launch gate.** AppSec and the data stewards decide on one new field instead of an
+  anonymous exposure: show the DAC approval date of controlled datasets to signed-in users, or use a
+  different date for them. The stewards' presentation questions, such as how to show the free-text
+  `species`, still apply. The `scope` vocabulary is a DAC name, which researchers can already read.
+- **Removable machinery.** If option A is later dropped, the anonymous-only pieces in section 7 can
+  be removed, and the existing per-user `RateLimitFilter` covers the route. While A stays possible,
+  B keeps them, switched off.
+
+### Opportunities under any option, easier when signed in
+
+- **Personal card state.** A card can say "Approved" from the researcher's approved datasets
+  (`GET /api/user/me/researcher/datasets`), or "Request in progress" from their own requests
+  (`GET /api/collections/role/researcher/summary`). `GET /api/dar/v2` is not a source: it returns an
+  empty list to a researcher. This also gives E8's
+  instant-approval shelf a per-user answer. Under option A the page would fetch this separately for
+  signed-in visitors; under B the shelf already knows the user.
+- **Subscriptions tied to the account (E7).** A signed-in subscriber removes anonymous enrollment
+  from S7.1's first release. S7.1 still needs its decisions on verification and on unsubscribing,
+  including unsubscribing from an email link while signed out.
+- **Identified analytics (S5.2).** S5.2 already links anonymous and signed-in events through
+  sign-in. Signed-in shelves mean every dataset-card event has a user.
+
+### Not an opportunity
+
+- **Catalog asset records on resource cards.** `GET /api/asset-catalog/{identifier}` returns only
+  the identifier, type, status, `listed` flag and ids, not a name or URL. Sign-in removes one of the
+  four reasons the contracts record gives for not reusing `DUOS-W-` and `DUOS-M-` records in S3.4
+  ("no public source"). The others remain: no record for apps, editorial picks that are not
+  registered assets, and no thumbnail or docs URL.
 
 ### Costs and risks
 
 - **Reach.** The source epic describes a public page for a program. In B, a visitor without an
   account sees the program but not its datasets; in C, they see nothing. Partners may judge this
   differently.
-- **Production-data previews.** S4.2 previews a hidden showcase on staging against production data
-  through the anonymous lookup. An authenticated lookup would need the reviewer to be signed in to
-  production from a staging page, which the BFF session and the legacy token do not support. Previews
-  would use staging data instead, so they show the layout but not the production cards.
+- **Production-data previews and release qualification.** S4.2 previews a hidden showcase on
+  staging against production data through the anonymous lookup, and S5.3 qualifies launch that way.
+  An authenticated lookup would need the reviewer to be signed in to production from a staging
+  page, which neither the BFF session nor the legacy token supports. Staging cannot stand in: configs
+  list production identifiers, aliases come from a per-environment sequence, and the delivery plan
+  forbids passing production aliases to a staging backend, because they would resolve to unrelated
+  staging datasets. So a staging preview would show the layout with no dataset cards, and S4.2's
+  acceptance check, "a reviewer can see a pending showcase with real live cards before merge", would
+  change. Production does not render `hidden` showcases (`isShowcaseHiddenPreviewEnabled` is off for
+  `prod`), so nothing replaces that check today. The candidates are in section 9.
+- **The health check.** S4.3's scheduled check calls the anonymous production lookup without a
+  session. Under B it needs its own credential (a service account) or stays blocked.
 - **Sign-in friction.** Each dataset shelf needs a clear sign-in prompt that returns the visitor to
   the same showcase.
 - **Popularity is still private.** Signed-in users are not trusted readers of request counts, so the
   E6 rules (a minimum request count, no totals or trends) stay.
-- **Work already done.** Option B keeps the anonymous code but leaves it off; removing it is a
-  separate choice (section 7).
+- **One projection, two routes.** The new route reuses `ShowcasePublicField`. Adding a field to it
+  for signed-in users would also add it to the anonymous route if DT-4466 turns that on. A wider
+  signed-in card needs its own projection, or approval for both routes.
 
 ## 6. Recommendation
 
 Choose **option B**:
 
-- It unblocks launch now, on an AppSec confirmation instead of a field approval.
+- It unblocks launch on a decision about one field instead of the whole anonymous exposure.
 - It keeps the public program page that partners can link to.
 - It leaves option A open: the anonymous lookup stays in the code, switched off, and DT-4466 can
   still turn it on once the field approval lands.
@@ -158,47 +191,60 @@ Decisions for the product owner (Jonathan Lawson):
 
 | Item | B or C |
 | --- | --- |
-| `POST /api/showcase/datasets` | **New.** `@PermitAll` with `@Auth`, the same request contract and `ShowcaseCatalogService`, the same projection, eligibility and `unavailable` result. OpenAPI path under `/api`. |
-| `RateLimitFilter` | Applies to the new route per user, where `rateLimit.enabled` is on. Check each environment's value in terra-helmfile before launch. |
-| `PublicShowcaseCatalogResource`, `PublicRateLimitFilter`, `ShowcaseConfiguration`, the `rateLimit.showcase` block | Kept, switched off. Remove only if option A is dropped. |
-| `SignedClientIpVerifier`, `ClientIpResolver` | Kept. The support form uses them too ([DT-4496](https://broadworkbench.atlassian.net/browse/DT-4496)). |
-| `/showcase/*` CORS (`showcaseAllowedOrigins`) | Kept with the public route, or removed with it. |
+| `POST /api/showcase/datasets` | **New.** `@PermitAll` with `@Auth`, the same request contract and `ShowcaseCatalogService`, the same projection, eligibility rule and `unavailable` result. OpenAPI path under `/api`. |
+| Request caps (body size, identifier count, ranking limit) | Kept on the new route: a signed-in caller can still send a large request. |
+| `RateLimitFilter` | Applies to the new route where `rateLimit.enabled` is on. It is one budget per user across all of `api/`. Check each environment's value in terra-helmfile before launch. |
+| `PublicShowcaseCatalogResource`, `ShowcaseConfiguration` | Kept, with the resource unregistered (`showcase.publicLookupEnabled` off). |
+| `PublicRateLimitFilter`, the `rateLimit.showcase` block, `SignedClientIpVerifier`, `ClientIpResolver` | Kept. The filter is registered whatever the switch says and still limits `showcase/*` by IP. Remove only if option A is dropped, and keep the signed client IP if another anonymous route uses it by then ([DT-4496](https://broadworkbench.atlassian.net/browse/DT-4496) signs support requests in duos-ui; the Consent side is not merged). |
 
-The request caps (body size, identifier count, ranking limit) stay on the new route: a signed-in
-caller can still send a large request.
+### terra-helmfile
+
+| Item | B or C |
+| --- | --- |
+| `proxy.showcaseAllowedOrigins` (Consent's `/showcase/*` CORS) and the chart switch `showcasePublicLookupEnabled` | Unchanged while A stays possible. |
+| `DUOS_SHOWCASE_API_URL`, `showcaseApiUrl` | Unused by the shelves; removed only if A is dropped. |
 
 ### duos-ui
 
 | Item | B or C |
 | --- | --- |
-| `ShowcaseCatalog.ts` | Calls the new route through `fetchAdapter`, like other `/api` calls: the BFF API proxy in BFF mode, `apiUrl` in legacy mode. |
+| `ShowcaseCatalog.ts` | Calls the new route with the user's credentials: the BFF API proxy in BFF mode, `apiUrl` in legacy mode. It keeps its own handling of 400 and 429 rather than `fetchAdapter`'s, which signs the user out on a 401 and reports every error status. |
 | Dataset shelves and hero counts | B: signed-out visitors see a sign-in prompt instead of the lookup. `ShowcasePage` already reads `useUserIsLogged()`. |
 | Showcase routes | B: unchanged. C: move `/data` and `/showcase/:key` inside `Authenticated`, which keeps the URL through sign-in. |
 | Sign-in return | The prompt signs in with the showcase URL as the target, as `SignInButton` does with `redirectTo`. |
-| `showcaseHandoffsEnabled` | Always on once the lookup and the handoffs use the same Consent. The production-data preview case (D19) goes away. |
-| BFF `POST /public/showcase/datasets`, legacy `showcaseApiUrl`, `DUOS_SHOWCASE_API_URL`, the legacy CSP entry | Unused. Remove only if option A is dropped. |
-| S4.2 preview procedure, `docs/data-showcase-lookup.md` | Previews use staging data. |
+| `showcaseHandoffsEnabled` | Today the BFF (`server/src/config.ts`) and the legacy client (`src/libs/config.ts`) turn handoffs on only when the lookup URL's origin equals `apiUrl`'s. With the lookup on `apiUrl`, both derivations change so handoffs follow the authenticated route. The production-data preview case (D19) goes away. |
+| BFF `POST /public/showcase/datasets`, the legacy CSP entry | Unused. Remove only if A is dropped. |
+| S4.2 preview procedure, `docs/data-showcase-lookup.md` | Staging previews show no dataset cards; the replacement check follows the section 9 decision. |
 
 ## 8. Proposed stories (option B)
 
-1. **Authenticated lookup (consent).** Add `POST /api/showcase/datasets` with the existing service
-   and tests for the contract, the eligibility rule, the field list and the per-user rate limit.
-   Record the AppSec confirmation in the contracts record's "Open gates".
-2. **Signed-in shelves (duos-ui).** Switch the client to the new route, show the sign-in prompt on
-   dataset shelves and hero counts for signed-out visitors, and return them to the showcase after
-   sign-in. Playwright: signed out and signed in, BFF and legacy.
-3. **Previews (duos-ui).** Change the S4.2 procedure and the lookup docs to staging data, and remove
+1. **Authenticated lookup (consent).** Add `POST /api/showcase/datasets` with the existing service,
+   and tests for the contract, the eligibility rule, the field list and the rate limit. Record the
+   `availableDate` decision and the stewards' presentation decisions in the contracts record's "Open
+   gates".
+2. **Signed-in shelves (duos-ui).** Switch the client to the new route with its own error handling,
+   show the sign-in prompt on dataset shelves and hero counts for signed-out visitors, return them
+   to the showcase after sign-in, and change the handoffs derivation. Playwright: signed out and
+   signed in, BFF and legacy.
+3. **Previews and release qualification (duos-ui).** Change the S4.2 procedure, its acceptance
+   check and the lookup docs: staging previews show the layout without dataset cards. Add the
+   replacement check chosen in section 9, use it for S5.3's release qualification too, and remove
    the production-data preview notice.
-4. **Launch (E5).** Unchanged, except that the flagship's hero counts follow decision 3.
+4. **Health check (S4.3).** Give the scheduled check a service-account credential for the new route,
+   or keep it blocked with DT-4466.
+5. **Launch (E5).** Unchanged apart from story 3, and the flagship's hero counts follow decision 3.
 
-Follow-on stories, each planned when it starts: personal card state, account subscriptions (E7),
-asset records on resource cards, and removal of the anonymous route if option A is dropped.
+Follow-on stories, each planned when it starts: personal card state, account subscriptions (E7) and
+removal of the anonymous route if option A is dropped.
 
 ## 9. Open questions
 
 | Question | Owner |
 | --- | --- |
 | Option A, B or C, and the hero counts for signed-out visitors | Product owner |
-| Does an authenticated lookup with the S2.1 fields need any approval beyond confirming section 3? | AppSec |
+| May signed-in users see the DAC approval date of controlled datasets, or should those cards use another date? | AppSec, data stewards |
+| How should the free-text `species` be shown (as is, truncated, or not at all)? | Data stewards |
 | Is `rateLimit.enabled` on in staging and production? | Consent lead |
+| Does the health check get a service-account credential? | Consent lead, duos-ui lead |
+| How is a hidden showcase's real cards checked before launch: render `hidden` entries on production for admins only; a script that resolves the config's identifiers through the new route with a reviewer's credential (identifiers, not layout); or check the live page right after release, before announcing it? | Product owner, duos-ui lead |
 | Do partners accept that their datasets need a DUOS account to view? | Product owner, partners |
