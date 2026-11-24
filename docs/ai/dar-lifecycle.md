@@ -96,10 +96,11 @@ failure to record is logged and doesn't fail the request.
 - Elections are per (DAR reference id, dataset). A chair opens them
   (`DarCollectionService.createElectionsForDarCollection`), or auto-open DACs and DAC automation
   rules open them (`createElectionsForNewDarCollection`, `DACAutomationRuleService`). None of
-  them opens elections on a draft: the chair gets 409 when any DAR in the collection is a draft,
-  and every path re-checks under the collection lock that its DAR is still submitted with the
-  date it read (`DataAccessRequestDAO.isSubmittedAt`, compared to the millisecond because
-  progress reports store microseconds and Java copies keep milliseconds). The automated paths
+  them opens elections on a draft or a canceled DAR: the chair gets 409 when any DAR in the
+  collection is a draft, or when its DAR is canceled, and every path re-checks under the
+  collection lock that its DAR is still submitted with the date it read and not canceled
+  (`DataAccessRequestDAO.isUnderReviewAt`, compared to the millisecond because progress reports
+  store microseconds and Java copies keep milliseconds). The automated paths
   skip a DAR that fails the check, and new-DAR processing (elections and new-request emails)
   skips a collection that holds a draft.
 - A grant is a (DAR, dataset) pair whose most recent `final` or `radar_approve` vote on a

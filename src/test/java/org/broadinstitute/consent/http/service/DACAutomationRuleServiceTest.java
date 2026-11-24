@@ -845,7 +845,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = makeDAR();
     Dataset dataset = makeDataset();
     // No longer submitted by the time the rule runs.
-    when(dataAccessRequestDAO.isSubmittedAt(dar.getReferenceId(), dar.getSubmissionDate()))
+    when(dataAccessRequestDAO.isUnderReviewAt(dar.getReferenceId(), dar.getSubmissionDate()))
         .thenReturn(false);
 
     assertThrows(
@@ -853,13 +853,15 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
         () -> service.openElectionAndApprove(rule, ruleImplementation, dar, dataset, request));
     InOrder order = inOrder(dataAccessRequestDAO);
     order.verify(dataAccessRequestDAO).lockCollection(dar.getCollectionId());
-    order.verify(dataAccessRequestDAO).isSubmittedAt(dar.getReferenceId(), dar.getSubmissionDate());
+    order
+        .verify(dataAccessRequestDAO)
+        .isUnderReviewAt(dar.getReferenceId(), dar.getSubmissionDate());
     verify(electionDAO, never()).inTransaction(any());
   }
 
   @Test
   void testOpenElectionAndApprove() {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     RuleImplementationInterface ruleImplementation = new GeneralResearchUseV1();
     DataAccessRequest dar = makeDAR();
@@ -888,7 +890,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
   @Test
   void testOpenElectionAndApproveException() {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     RuleImplementationInterface ruleImplementation = new GeneralResearchUseV1();
     DataAccessRequest dar = makeDAR();
@@ -926,7 +928,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
   @Test
   void testApplyRuleApprove() {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     Dataset datasetGru = makeDataset();
     DataAccessRequest darHmb = makeDAR();
@@ -1074,7 +1076,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
   @Test
   void testOpenElectionAndApprove_transactionLambdaCreatesElectionAndVote() {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     RuleImplementationInterface ruleImplementation = new GeneralResearchUseV1();
     DataAccessRequest dar = makeDAR();

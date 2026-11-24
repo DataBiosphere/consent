@@ -103,10 +103,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   List<Integer> findDatasetIdsByCollectionId(@Bind("collectionId") Integer collectionId);
 
   /**
-   * Whether the DAR is still submitted with this submission date. False for a draft, and for a DAR
-   * whose submission date changed since the caller read it. Compared to the millisecond: the column
-   * keeps microseconds (every submission writes NOW()), but a Java Date, a bound Date and a Gson
-   * copy of a collection keep only milliseconds.
+   * Whether the DAR can still be reviewed as the caller read it: submitted with this submission
+   * date, and not canceled. False for a draft, for a DAR whose submission date changed since the
+   * caller read it, and for a DAR its researcher canceled. The chair, auto-open and DAC automation
+   * paths check this under the collection lock; auto-open after a signing official's approval
+   * checks DarCollectionService.isStillApproved instead, which also rejects a canceled DAR.
+   * Compared to the millisecond: the column keeps microseconds (every submission writes NOW()), but
+   * a Java Date, a bound Date and a Gson copy of a collection keep only milliseconds.
    */
   @SqlQuery(
       """
@@ -115,9 +118,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           WHERE reference_id = :referenceId
             AND date_trunc('milliseconds', submission_date)
                 = date_trunc('milliseconds', CAST(:submissionDate AS timestamptz))
+            AND LOWER(data->>'status') IS DISTINCT FROM 'canceled'
       )
       """)
-  boolean isSubmittedAt(
+  boolean isUnderReviewAt(
       @Bind("referenceId") String referenceId, @Bind("submissionDate") Date submissionDate);
 
   @SqlQuery(

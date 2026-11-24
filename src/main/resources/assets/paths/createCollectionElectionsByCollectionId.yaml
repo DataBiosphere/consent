@@ -29,8 +29,8 @@ post:
       description: Not Found
     409:
       description: >-
-        Conflict. The collection has a submitted closeout, any of its DARs is a draft, or it cannot
-        have elections opened in its current state.
+        Conflict. The collection has a submitted closeout, any of its DARs is a draft, its DAR was
+        canceled by its researcher, or it cannot have elections opened in its current state.
     429:
       description: Too Many Requests - rate limit exceeded
       content:
