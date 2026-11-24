@@ -84,7 +84,6 @@ public class DarCollectionService implements ConsentLogger {
       "Cannot open elections on a collection that has a draft.";
   private static final String CHANGED_ELECTION_ERROR =
       "The collection changed since it was loaded. Reload it and try again.";
-  private static final String CREATE_ELECTION_DATASET_ERROR = "At least one dataset is required";
 
   private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
   private final DacDAO dacDAO;
@@ -970,6 +969,14 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollection approveDarCollection(
       User user, DarCollection collection, ContainerRequest request, SubmissionApproval approved)
       throws ConsentConflictException, BadRequestException, ForbiddenException {
+    DataAccessRequest dar = collection.getMostRecentDar();
+    if (dar == null) {
+      throw new NotFoundException(
+          "DAR Collection ID: [%s] has no data access request"
+              .formatted(collection.getDarCollectionId()));
+    }
+    // Only the request's signing official learns anything more about the collection.
+    requireSigningOfficialOf(user, dar);
     // A draft can still change, so a collection that holds one can't be approved.
     if (collection.getDars().values().stream()
         .anyMatch(d -> Objects.isNull(d.getSubmissionDate()))) {
@@ -981,7 +988,6 @@ public class DarCollectionService implements ConsentLogger {
           "Approval of collection %s doesn't name a submission"
               .formatted(collection.getDarCollectionId()));
     }
-    DataAccessRequest dar = collection.getMostRecentDar();
     if (dar.getRequiresSOApproval()) {
       approveDataAccessRequestBySigningOfficial(user, dar, request, approved);
       return darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
@@ -1001,26 +1007,26 @@ public class DarCollectionService implements ConsentLogger {
     if (!user.hasUserRole(UserRoles.CHAIRPERSON)) {
       throw new ForbiddenException(CREATE_ELECTION_ROLE_ERROR);
     }
-    // A draft isn't under review, so a collection that holds one gets no elections.
-    // A DAR loaded as a draft but submitted since is rejected too: the copy here would be stale.
-    if (collection.getDars().values().stream()
-        .anyMatch(d -> Objects.isNull(d.getSubmissionDate()))) {
-      throw new ConsentConflictException(DRAFT_ELECTION_ERROR);
-    }
     DataAccessRequest dar = collection.getMostRecentDar();
     if (Objects.isNull(dar)) {
       throw new BadRequestException(
           "DAR Collection ID: [%s] does not have any associated DAR ids"
               .formatted(collection.getDarCollectionId()));
     }
+    // No chair governs a DAR without datasets, so it gets the same 403 as another DAC's chair.
     List<Integer> darDatasetIds = dar.getDatasetIds();
-    if (darDatasetIds.isEmpty()) {
-      throw new BadRequestException(CREATE_ELECTION_DATASET_ERROR);
-    }
     Set<Integer> governedDatasetIds =
         Set.copyOf(getDatasetIdsForUserAndRoleId(user, UserRoles.CHAIRPERSON.getRoleId()));
     if (darDatasetIds.stream().noneMatch(governedDatasetIds::contains)) {
       throw new ForbiddenException(CREATE_ELECTION_DAC_ERROR);
+    }
+    // Checked only after the chair is known to govern the collection, so no other chair learns
+    // that it holds a draft. A draft isn't under review, so a collection that holds one gets no
+    // elections. A DAR loaded as a draft but submitted since is rejected too: the copy here
+    // would be stale.
+    if (collection.getDars().values().stream()
+        .anyMatch(d -> Objects.isNull(d.getSubmissionDate()))) {
+      throw new ConsentConflictException(DRAFT_ELECTION_ERROR);
     }
     return dar;
   }
@@ -1681,18 +1687,23 @@ public class DarCollectionService implements ConsentLogger {
         && locked.getSubmissionDate().getTime() == loaded.getSubmissionDate().getTime();
   }
 
-  private void validateSigningOfficialApproval(User signingOfficial, DataAccessRequest dar) {
+  /** Rejects a user who isn't the request's signing official, before any check on its state. */
+  private void requireSigningOfficialOf(User signingOfficial, DataAccessRequest dar) {
     if (dar.getData() == null) {
       throw new ConsentConflictException(
           ("This data access request does not support this operation"));
     }
     String darSigningOfficialEmail = dar.data.getSigningOfficialEmail();
-    if (dar.getApprovingSigningOfficialUserId() != null) {
-      throw new BadRequestException("This data access request has already been approved");
-    }
     if (signingOfficial.getEmail() == null
         || !signingOfficial.getEmail().equalsIgnoreCase(darSigningOfficialEmail)) {
       throw new ForbiddenException("You are not the Signing Official for this request.");
+    }
+  }
+
+  private void validateSigningOfficialApproval(User signingOfficial, DataAccessRequest dar) {
+    requireSigningOfficialOf(signingOfficial, dar);
+    if (dar.getApprovingSigningOfficialUserId() != null) {
+      throw new BadRequestException("This data access request has already been approved");
     }
     // A draft can still change, so an approval would not apply to what gets submitted.
     if (dar.getSubmissionDate() == null) {
