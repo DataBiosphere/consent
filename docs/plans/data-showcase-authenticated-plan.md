@@ -167,5 +167,6 @@ anonymous lookup; this task moves it to the authenticated route.
   role. A shared service account would also open the endpoints its role allows.
 - Give the credential only to the scheduled and manual runs on `develop`, through Workload Identity
   Federation or an environment-scoped secret. Pull-request runs execute the PR's own script, so they
-  run without it and skip the identifier lookups.
+  run without it: they check links only, and a showcase PR's identifiers are checked by the
+  reviewer's local run (Task 3) and then by the daily run.
 - DT-4359 is then no longer blocked by DT-4466.
