@@ -2826,11 +2826,10 @@ institution or library cards issued: Internal Collaborator member:  \
         new SubmissionApproval(
             closeout.dar.getReferenceId(), closeout.dar.getSubmissionDate().getTime() - 1);
 
+    String referenceId = closeout.dar.getReferenceId();
     assertThrows(
         ConsentConflictException.class,
-        () ->
-            service.approveDataAccessRequestCloseout(
-                closeout.actor, closeout.dar.getReferenceId(), reviewed));
+        () -> service.approveDataAccessRequestCloseout(closeout.actor, referenceId, reviewed));
     verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
     verifyNoInteractions(emailService);
   }
@@ -2861,11 +2860,10 @@ institution or library cards issued: Internal Collaborator member:  \
     SubmissionApproval reviewed =
         new SubmissionApproval("another", closeout.dar.getSubmissionDate().getTime());
 
+    String referenceId = closeout.dar.getReferenceId();
     assertThrows(
         ConsentConflictException.class,
-        () ->
-            service.approveDataAccessRequestCloseout(
-                closeout.actor, closeout.dar.getReferenceId(), reviewed));
+        () -> service.approveDataAccessRequestCloseout(closeout.actor, referenceId, reviewed));
     verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
   }
 
@@ -2874,9 +2872,10 @@ institution or library cards issued: Internal Collaborator member:  \
     String referenceId = UUID.randomUUID().toString();
     mockDarTransaction();
 
+    User user = new User();
     assertThrows(
         NotFoundException.class,
-        () -> service.approveDataAccessRequestCloseout(new User(), referenceId, null));
+        () -> service.approveDataAccessRequestCloseout(user, referenceId, null));
     verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
   }
 
@@ -2890,9 +2889,10 @@ institution or library cards issued: Internal Collaborator member:  \
         .when(dataAccessRequestDAO)
         .lockDataAccessRequest(referenceId);
 
+    User user = new User();
     assertThrows(
         ConsentConflictException.class,
-        () -> service.approveDataAccessRequestCloseout(new User(), referenceId, null));
+        () -> service.approveDataAccessRequestCloseout(user, referenceId, null));
   }
 
   @Test
@@ -2903,11 +2903,12 @@ institution or library cards issued: Internal Collaborator member:  \
         new UnableToExecuteStatementException("lock", new SQLException("broken", "08006"), null);
     doThrow(failure).when(dataAccessRequestDAO).lockDataAccessRequest(referenceId);
 
+    User user = new User();
     assertSame(
         failure,
         assertThrows(
             UnableToExecuteStatementException.class,
-            () -> service.approveDataAccessRequestCloseout(new User(), referenceId, null)));
+            () -> service.approveDataAccessRequestCloseout(user, referenceId, null)));
   }
 
   /** Runs the DAR DAO's transaction callback on the mock itself. */
