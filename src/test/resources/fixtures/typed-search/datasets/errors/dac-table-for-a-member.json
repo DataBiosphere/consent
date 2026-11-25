@@ -1,0 +1,10 @@
+{
+  "example": "datasets 1.5: a Member cannot use dacTable",
+  "source": "docs/plans/typed-search-examples-datasets.md#15-dac-datasets",
+  "user": { "roles": ["MEMBER"] },
+  "request": { "view": "datasets", "scope": {"dacIds": [3]}, "projection": "dacTable" },
+  "response": {
+    "status": 400,
+    "body": { "message": "Projection not permitted for the role: dacTable", "code": 400 }
+  }
+}

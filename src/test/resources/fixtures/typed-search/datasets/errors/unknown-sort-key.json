@@ -1,0 +1,7 @@
+{
+  "example": "datasets error: unknown sort key",
+  "source": "docs/plans/typed-search-examples-datasets.md#2-error-examples",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "datasets", "scope": {"library": null}, "sort": {"key": "dataUse", "order": "asc"} },
+  "response": { "status": 400, "body": {"message": "Unknown sort key for datasets: dataUse", "code": 400} }
+}

@@ -1,0 +1,11 @@
+{
+  "example": "datasets error: values on range key",
+  "source": "docs/plans/typed-search-examples-datasets.md#2-error-examples",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "datasets",
+    "scope": { "library": null },
+    "filters": [ {"key": "participantCount", "values": ["100"]} ]
+  },
+  "response": { "status": 400, "body": {"message": "Filter needs a range: participantCount", "code": 400} }
+}

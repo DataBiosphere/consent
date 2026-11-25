@@ -1,0 +1,7 @@
+{
+  "example": "datasets 1.4: a Researcher cannot use ownedByMe",
+  "source": "docs/plans/typed-search-examples-datasets.md#14-submissions-datasets-tab",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "datasets", "scope": {"ownedByMe": true} },
+  "response": { "status": 403, "body": {"message": "Not permitted: ownedByMe", "code": 403} }
+}

@@ -1,0 +1,10 @@
+{
+  "example": "datasets error: library scope with dac table",
+  "source": "docs/plans/typed-search-examples-datasets.md#2-error-examples",
+  "user": { "roles": ["CHAIRPERSON"] },
+  "request": { "view": "datasets", "scope": {"library": null}, "projection": "dacTable" },
+  "response": {
+    "status": 400,
+    "body": { "message": "Projection not permitted for scope library: dacTable", "code": 400 }
+  }
+}

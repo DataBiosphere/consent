@@ -1,0 +1,7 @@
+{
+  "example": "datasets error: dac scope without dac role",
+  "source": "docs/plans/typed-search-examples-datasets.md#2-error-examples",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "datasets", "scope": {"dacIds": [3]} },
+  "response": { "status": 403, "body": {"message": "Not permitted: dacIds", "code": 403} }
+}

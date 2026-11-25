@@ -1,0 +1,7 @@
+{
+  "example": "datasets error: two scope keys",
+  "source": "docs/plans/typed-search-examples-datasets.md#2-error-examples",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "datasets", "scope": {"ownedByMe": true, "dacIds": [3]} },
+  "response": { "status": 400, "body": {"message": "The scope must have exactly one key", "code": 400} }
+}
