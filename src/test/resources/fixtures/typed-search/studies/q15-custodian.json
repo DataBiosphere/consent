@@ -1,0 +1,33 @@
+{
+  "example": "Q15, Submissions for a Data Submitter who is a custodian",
+  "source": "docs/plans/typed-search-examples-open-questions.md#4-q15-the-data-custodian-in-the-ownership-rule",
+  "user": {
+    "roles": [ "DATASUBMITTER" ],
+    "relation": "data custodian of study 50, which they did not create; created study 51"
+  },
+  "request": { "view": "studies", "scope": {"ownedByMe": true} },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "studies",
+      "total": 2,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "studyId": 50,
+          "studyName": "Liver Study",
+          "datasetCount": 2,
+          "totalParticipants": 500,
+          "dataCustodianEmail": [ "dana@example.org" ]
+        },
+        {
+          "studyId": 51,
+          "studyName": "Skin Study",
+          "datasetCount": 1,
+          "totalParticipants": 120,
+          "dataCustodianEmail": [ "other@example.org" ]
+        }
+      ]
+    }
+  }
+}

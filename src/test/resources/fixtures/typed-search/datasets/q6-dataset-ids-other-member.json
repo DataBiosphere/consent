@@ -1,0 +1,11 @@
+{
+  "example": "Q6 1.3, dataset ids, a Member of another DAC only",
+  "source": "docs/plans/typed-search-examples-open-questions.md#13-dataset-ids",
+  "user": { "roles": ["MEMBER"], "relation": "member of a DAC that does not govern dataset 105" },
+  "request": { "view": "datasets", "scope": {"datasetIds": [101, 105]}, "page": {"offset": 0, "limit": 10000} },
+  "response": {
+    "status": 404,
+    "body": { "message": "Not found: datasetIds", "code": 404 },
+    "serverCheck": "dataset 105 is in study 42, which is not public, and its DAC is not a DAC of the user"
+  }
+}

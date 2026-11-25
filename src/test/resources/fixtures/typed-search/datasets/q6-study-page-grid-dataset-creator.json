@@ -1,0 +1,22 @@
+{
+  "example": "Q6 1.2, the study page grid, a Researcher who created only dataset 105",
+  "source": "docs/plans/typed-search-examples-open-questions.md#12-the-study-page",
+  "user": { "roles": ["RESEARCHER"], "relation": "created dataset 105 of study 42, which is not public" },
+  "request": { "view": "datasets", "scope": {"studyId": 42}, "page": {"offset": 0, "limit": 25} },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "datasets",
+      "total": 1,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "datasetId": 105,
+          "datasetName": "Kidney Cohort",
+          "study": { "studyId": 42, "studyName": "Kidney Study" },
+          "dataUse": { "primary": [{"code": "GRU", "description": "General research use"}], "secondary": [] }
+        }
+      ]
+    }
+  }
+}

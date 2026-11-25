@@ -1,0 +1,16 @@
+{
+  "example": "Q13, a DAC of another user",
+  "source": "docs/plans/typed-search-examples-open-questions.md#3-q13-a-target-that-the-user-cannot-read",
+  "user": { "roles": ["CHAIRPERSON"], "relation": "chair of DAC 3, not of DAC 8" },
+  "request": {
+    "view": "datasets",
+    "projection": "dacTable",
+    "page": { "offset": 0, "limit": 10000 },
+    "scope": { "dacIds": [3, 8] }
+  },
+  "response": {
+    "status": 404,
+    "body": { "message": "Not found: dacIds", "code": 404 },
+    "serverCheck": "DAC 8 is not a DAC of the user"
+  }
+}
