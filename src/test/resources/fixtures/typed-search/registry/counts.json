@@ -1,0 +1,13 @@
+{
+  "view": "counts",
+  "source": "docs/plans/typed-search-counts.md",
+  "requestFields": ["view", "scope", "search", "filters"],
+  "scopes": {
+    "library": [],
+    "ownedByMe": ["DATASUBMITTER", "CHAIRPERSON", "ADMIN"]
+  },
+  "totals": [
+    "studies", "datasets", "models", "workspaces", "clinical_trials", "biospecimens",
+    "publications", "presentations", "intellectual_properties", "funding_resources"
+  ]
+}

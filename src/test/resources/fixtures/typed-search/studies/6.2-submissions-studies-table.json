@@ -1,0 +1,38 @@
+{
+  "example": "studies 6.2, Submissions Studies table",
+  "source": "docs/plans/typed-search-studies.md#62-submissions-studies-table",
+  "user": { "roles": ["DATASUBMITTER"] },
+  "request": {
+    "view": "studies",
+    "scope": { "ownedByMe": true },
+    "sort": { "key": "piName", "order": "asc" },
+    "page": { "offset": 0, "limit": 25 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "studies",
+      "total": 5,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "studyId": 7,
+          "studyName": "Heart Study",
+          "studyDescription": "A cohort study of heart disease.",
+          "piName": "Example PI",
+          "species": "Human",
+          "phenotype": "Cardiovascular disease",
+          "dataTypes": [ "WGS", "RNA-seq" ],
+          "dataUseCodes": [ "GRU", "HMB" ],
+          "accessTypes": [ "controlled", "open" ],
+          "datasetCount": 3,
+          "totalParticipants": 4200,
+          "datasetIds": [ 101, 102, 105 ],
+          "modelCount": 1,
+          "workspaceCount": 0,
+          "dataCustodianEmail": [ "custodian@example.org" ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "example": "counts error: facets",
+  "source": "docs/plans/typed-search-counts.md#44-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "counts", "scope": {"library": null}, "facets": [{"key": "dac"}] },
+  "response": { "status": 400, "body": {"message": "Field not accepted by view counts: facets", "code": 400} }
+}

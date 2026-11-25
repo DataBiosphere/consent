@@ -1,0 +1,7 @@
+{
+  "example": "studies error: dataset sort key",
+  "source": "docs/plans/typed-search-studies.md#64-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "studies", "scope": {"library": null}, "sort": {"key": "datasetName"} },
+  "response": { "status": 400, "body": {"message": "Unknown sort key for studies: datasetName", "code": 400} }
+}

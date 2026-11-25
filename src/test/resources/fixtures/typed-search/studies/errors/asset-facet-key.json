@@ -1,0 +1,7 @@
+{
+  "example": "studies error: asset facet key",
+  "source": "docs/plans/typed-search-studies.md#64-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "studies", "scope": {"library": null}, "facets": [{"key": "modelLicense"}] },
+  "response": { "status": 400, "body": {"message": "Unknown facet key for studies: modelLicense", "code": 400} }
+}

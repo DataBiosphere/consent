@@ -1,0 +1,39 @@
+{
+  "example": "studies 6.1, Data Library Studies tab",
+  "source": "docs/plans/typed-search-studies.md#61-data-library-studies-tab",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "studies",
+    "scope": { "library": null },
+    "search": "heart",
+    "filters": [ {"key": "dataType", "values": ["WGS"]} ],
+    "sort": { "key": "totalParticipants", "order": "desc" },
+    "page": { "offset": 0, "limit": 12 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "studies",
+      "total": 18,
+      "page": { "offset": 0, "limit": 12 },
+      "results": [
+        {
+          "studyId": 7,
+          "studyName": "Heart Study",
+          "studyDescription": "A cohort study of heart disease.",
+          "piName": "Example PI",
+          "species": "Human",
+          "phenotype": "Cardiovascular disease",
+          "dataTypes": [ "WGS", "RNA-seq" ],
+          "dataUseCodes": [ "GRU", "HMB" ],
+          "accessTypes": [ "controlled", "open" ],
+          "datasetCount": 3,
+          "totalParticipants": 4200,
+          "datasetIds": [ 101, 102, 105 ],
+          "modelCount": 1,
+          "workspaceCount": 0
+        }
+      ]
+    }
+  }
+}

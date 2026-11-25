@@ -1,0 +1,24 @@
+{
+  "example": "counts 4.1, Data Library without search",
+  "source": "docs/plans/typed-search-counts.md#41-data-library-no-search",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "counts", "scope": {"library": null} },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "counts",
+      "totals": {
+        "studies": 18,
+        "datasets": 42,
+        "models": 3,
+        "workspaces": 2,
+        "clinical_trials": 4,
+        "biospecimens": 120,
+        "publications": 14,
+        "presentations": 6,
+        "intellectual_properties": 1,
+        "funding_resources": 5
+      }
+    }
+  }
+}
