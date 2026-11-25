@@ -1,0 +1,30 @@
+{
+  "example": "datasets 1.6, Manage DAC and DAC profile",
+  "source": "docs/plans/typed-search-examples-datasets.md#16-manage-dac-and-dac-profile",
+  "user": { "roles": ["CHAIRPERSON"] },
+  "request": {
+    "view": "datasets",
+    "scope": { "dacIds": [3] },
+    "projection": "dataUse",
+    "page": { "offset": 0, "limit": 10000 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "datasets",
+      "total": 120,
+      "page": { "offset": 0, "limit": 10000 },
+      "results": [
+        {
+          "datasetId": 101,
+          "dacId": 3,
+          "dac": { "dacId": 3, "dacName": "Broad DAC" },
+          "dataUse": {
+            "primary": [ {"code": "HMB", "description": "Health/medical/biomedical research"} ],
+            "secondary": [ {"code": "NPU", "description": "Not-for-profit use only"} ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "example": "datasets 1.8, dataset page from a DUOS-D link",
+  "source": "docs/plans/typed-search-examples-datasets.md#18-dataset-page",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "datasets",
+    "scope": { "datasetIds": [101] },
+    "projection": "detail",
+    "page": { "offset": 0, "limit": 1 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "datasets",
+      "total": 1,
+      "page": { "offset": 0, "limit": 1 },
+      "results": [
+        {
+          "datasetId": 101,
+          "datasetIdentifier": "DUOS-000101",
+          "datasetName": "Adult Sequencing Cohort",
+          "accessManagement": "controlled",
+          "dacId": 3,
+          "dataUse": { "primary": [{"code": "GRU", "description": "General research use"}], "secondary": [] }
+        }
+      ]
+    }
+  }
+}

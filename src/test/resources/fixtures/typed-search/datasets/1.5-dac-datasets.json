@@ -1,0 +1,51 @@
+{
+  "example": "datasets 1.5, DAC Datasets",
+  "source": "docs/plans/typed-search-examples-datasets.md#15-dac-datasets",
+  "user": { "roles": ["CHAIRPERSON"] },
+  "request": {
+    "view": "datasets",
+    "scope": { "dacIds": [3, 8] },
+    "projection": "dacTable",
+    "sort": { "key": "datasetIdentifier", "order": "asc" },
+    "page": { "offset": 0, "limit": 10000 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "datasets",
+      "total": 312,
+      "page": { "offset": 0, "limit": 10000 },
+      "results": [
+        {
+          "datasetId": 101,
+          "datasetIdentifier": "DUOS-000101",
+          "datasetName": "Adult Sequencing Cohort",
+          "dacId": 3,
+          "dac": { "dacName": "Broad DAC", "dacEmail": "dac@example.org" },
+          "dacApproval": true,
+          "deletable": false,
+          "hasInstitutionCertification": true,
+          "dataUse": {
+            "primary": [ {"code": "HMB", "description": "Health/medical/biomedical research"} ],
+            "secondary": []
+          },
+          "dataLocation": "AnVIL Workspace",
+          "url": "https://example.org/workspace",
+          "createUserDisplayName": "Dana Submitter",
+          "submitter": { "displayName": "Dana Submitter" },
+          "study": {
+            "studyId": 7,
+            "studyName": "Heart Study",
+            "phsId": "phs000001",
+            "description": "...",
+            "species": "Human",
+            "piName": "Pat Investigator",
+            "dataTypes": [ "WGS" ],
+            "dataCustodianEmail": [ "custodian@example.org" ],
+            "dataSubmitterEmail": "submitter@example.org"
+          }
+        }
+      ]
+    }
+  }
+}

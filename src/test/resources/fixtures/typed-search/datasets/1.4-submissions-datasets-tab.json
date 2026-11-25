@@ -1,0 +1,43 @@
+{
+  "example": "datasets 1.4, Submissions Datasets tab",
+  "source": "docs/plans/typed-search-examples-datasets.md#14-submissions-datasets-tab",
+  "user": { "roles": ["DATASUBMITTER"] },
+  "request": {
+    "view": "datasets",
+    "scope": { "ownedByMe": true },
+    "sort": { "key": "datasetName", "order": "asc" }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "datasets",
+      "total": 4,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "datasetId": 101,
+          "datasetIdentifier": "DUOS-000101",
+          "datasetName": "Adult Sequencing Cohort",
+          "study": {
+            "studyId": 7,
+            "studyName": "Heart Study",
+            "dataCustodianEmail": [ "custodian@example.org" ]
+          },
+          "accessManagement": "controlled",
+          "dacApproval": true,
+          "requestLocation": "DUOS",
+          "soApprovalModel": "PER_REQUEST",
+          "participantCount": 1200,
+          "dacId": 3,
+          "dac": { "dacName": "Broad DAC" },
+          "dataLocation": "AnVIL Workspace",
+          "url": "https://example.org/workspace",
+          "instantApprovalEligible": false,
+          "dataUse": { "primary": [{"code": "GRU", "description": "General research use"}], "secondary": [] },
+          "createUserDisplayName": "Dana Submitter",
+          "deletable": true
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "example": "datasets 1.7, DAR review and DUC addendum",
+  "source": "docs/plans/typed-search-examples-datasets.md#17-dar-review-and-duc-addendum",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "datasets",
+    "scope": { "datasetIds": [101, 102, 205] },
+    "projection": "dataUse",
+    "page": { "offset": 0, "limit": 10000 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "datasets",
+      "total": 2,
+      "page": { "offset": 0, "limit": 10000 },
+      "results": [
+        {
+          "datasetId": 101,
+          "dacId": 3,
+          "dac": { "dacId": 3, "dacName": "Broad DAC" },
+          "dataUse": {
+            "primary": [ {"code": "HMB", "description": "Health/medical/biomedical research"} ],
+            "secondary": [ {"code": "NPU", "description": "Not-for-profit use only"} ]
+          }
+        },
+        {
+          "datasetId": 102,
+          "dacId": 3,
+          "dac": { "dacId": 3, "dacName": "Broad DAC" },
+          "dataUse": { "primary": [{"code": "GRU", "description": "General research use"}], "secondary": [] }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "example": "datasets 1.8, an identifier that matches no dataset",
+  "source": "docs/plans/typed-search-examples-datasets.md#18-dataset-page",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "datasets",
+    "scope": { "datasetIdentifiers": ["DUOS-999999"] },
+    "projection": "detail",
+    "page": { "offset": 0, "limit": 1 }
+  },
+  "response": {
+    "status": 200,
+    "body": { "view": "datasets", "total": 0, "page": {"offset": 0, "limit": 1}, "results": [] }
+  }
+}
