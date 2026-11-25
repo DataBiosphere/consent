@@ -10,7 +10,7 @@ Ticket: [DT-3848](https://broadworkbench.atlassian.net/browse/DT-3848) (slice 2b
 This document has one example for each caller that reads dataset rows today.
 [`typed-search-datasets-registry.md`](typed-search-datasets-registry.md) ("the registry") defines
 the keys, the search fields, the server rules for each scope, and the projections of the
-`datasets` view. Slice 3 covers the `studies`, `assets`, and `counts` views. Slice 4 covers both outcomes of the open product decisions. Slice 5 turns each
+`datasets` view. Slice 3 covers the `studies`, `assets`, and `counts` views. Slice 4 records the product decisions. Slice 5 turns each
 example here into a JSON fixture for the consent and duos-ui contract tests.
 
 The values in the examples are illustrative. The field names, the shapes, and the rules are the
@@ -144,7 +144,7 @@ A Data Submitter lists the datasets that they own.
 ```
 
 The rows are those the user owns, from the session: the user created the dataset, or submitted the
-study, or is a data custodian of the study (pending product decision Q15). The approved rule does
+study, or is a data custodian of the study, by an exact match of the email (Q15). The approved rule does
 not apply, so controlled datasets without DAC approval appear (`showAllControlled` today). The
 default projection is `submission`: the `library` fields with `createUserDisplayName`,
 `study.dataCustodianEmail`, and `deletable`. A Researcher without the Data Submitter, Chairperson,
@@ -201,8 +201,9 @@ A Chairperson lists the datasets of their two DACs.
 ```
 
 The page searches the rows in the browser (`filterDatasetTerms`), so the request has no `search`,
-and `dacTable` carries each field that search reads. A DAC id that is not a DAC of the user gets a 403 or
-a 404, pending product decision Q13, unless the user is an Admin. A Member gets `dataUse` by
+and `dacTable` carries each field that search reads. A DAC id that is not a DAC of the user gets a
+404, the same as a DAC that does not exist (Q13). An Admin sees each DAC: for an Admin, an id
+that does not exist adds no rows. A Member gets `dataUse` by
 default, and a 400 for `dacTable` (registry section 5).
 
 ### 1.6 Manage DAC and DAC profile
@@ -242,14 +243,16 @@ The datasets of a data access request, by id.
 ```json
 {
   "view": "datasets",
-  "scope": { "datasetIds": [101, 102, 205] },
+  "scope": { "datasetIds": [101, 102] },
   "projection": "dataUse",
   "page": { "offset": 0, "limit": 10000 }
 }
 ```
 
-The response has the shape of example 1.6, with one row for each id that exists. Who can use this
-scope is pending product decision Q6 (slice 4). More than 10,000 ids get a 400; the caller sends
+The response has the shape of example 1.6. Each id must be a dataset that the user can see
+(contract section 3, Q6): a Researcher sees a dataset of a study that is not public if the dataset
+is in a submitted DAR of the user, and a Member of the DAC of the dataset sees it too. An id that does not exist, or
+that the user cannot see, gets 404 for the whole request (Q13). More than 10,000 ids get a 400; the caller sends
 them in batches of 10,000 (contract section 6).
 
 ### 1.8 Dataset page
@@ -296,7 +299,8 @@ The dataset page looks the dataset up by its identifier.
 ```
 
 `duos-000101` matches the same dataset: an identifier matches without regard to case (contract
-section 3). An identifier that matches no dataset returns `total` 0 and no rows.
+section 3). An identifier that matches no dataset gets 404, as does one that the user cannot see
+(Q13).
 
 The page also opens from links of the form `/dataset/DUOS-D101` (`DatasetList.tsx`), which name the
 dataset id, not the identifier (`DatasetStatistics.tsx`). For these, the page sends
@@ -315,7 +319,8 @@ The datasets of one study, one page at a time.
 }
 ```
 
-The response has the shape of example 1.1. Who can use this scope is pending product decision Q6.
+The response has the shape of example 1.1. A Researcher without a grant of contract section 3 gets
+404 for a study that is not public (Q6, Q13).
 Today the same ES request also returns the study details (`top_hits` on `study.*`) and the total
 participants (`sum`) that the page header shows (`useStudyDetailsData.ts`, `StudyDetails.tsx`).
 The page reads them from a `studies` view request with the same scope; slice 3 has the example.
@@ -369,5 +374,6 @@ Today this request fails for a study with more than 10,000 datasets (design sect
 | `"page": { "offset": 0, "limit": 10001 }` | 400: more than 10,000 rows in one page |
 | `"assetType": "models"` with `"view": "datasets"` | 400: the `datasets` view does not accept `assetType` |
 | A Researcher, not a DAC member, sends `"scope": { "dacIds": [3] }` | 403: the user cannot use the DAC scope for DAC 3 |
+| A Researcher sends `"scope": { "datasetIdentifiers": ["DUOS-000999"] }` for a dataset that does not exist, or one of a study that is not public that the user cannot see | 404, the same body for both (Q13) |
 | `"scope": { "ownedByMe": true, "dacIds": [3] }` | 400: the scope has two keys |
 | `"scope": { "library": null }`, `"projection": "dacTable"` | 400: the `library` scope does not permit `dacTable` (registry section 5) |
