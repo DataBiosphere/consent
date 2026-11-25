@@ -1,0 +1,33 @@
+{
+  "example": "datasets 1.2, facet metadata",
+  "source": "docs/plans/typed-search-examples-datasets.md#12-facet-metadata",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "datasets",
+    "scope": { "library": null },
+    "facets": [
+      { "key": "accessManagement" },
+      { "key": "dataUse" },
+      { "key": "dataUseModifiers", "size": 50 },
+      { "key": "dataType" },
+      { "key": "dac" }
+    ],
+    "page": { "offset": 0, "limit": 0 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "datasets",
+      "total": 5873,
+      "page": { "offset": 0, "limit": 0 },
+      "results": [],
+      "facets": {
+        "accessManagement": [ { "value": "controlled", "count": 5100 }, { "value": "open", "count": 773 } ],
+        "dataUse": [ { "value": "GRU", "count": 2400 }, { "value": "HMB", "count": 1900 } ],
+        "dataUseModifiers": [ { "value": "NPU", "count": 800 }, { "value": "RS-G", "count": 12 } ],
+        "dataType": [ { "value": "WGS", "count": 1500 }, { "value": "RNA-seq", "count": 600 } ],
+        "dac": [ { "value": "Broad DAC", "count": 3000 } ]
+      }
+    }
+  }
+}

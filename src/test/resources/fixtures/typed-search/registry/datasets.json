@@ -1,0 +1,79 @@
+{
+  "view": "datasets",
+  "source": "docs/plans/typed-search-datasets-registry.md",
+  "librariesSource": "duos-ui src/libs/libraryVersions.ts at c52f9246 (the keys of the branded libraries)",
+  "libraries": [
+    "broad", "mgb", "elwazi", "myinstitution", "nhgri", "nhlbi", "scp",
+    "nhlbi-blood-disorders-and-blood-safety", "nhlbi-health-disparities",
+    "nhlbi-heart-and-vascular-diseases", "nhlbi-lung-diseases",
+    "nhlbi-obesity-nutrition-and-physical-activity", "nhlbi-population-and-epidemiology-studies",
+    "nhlbi-precision-medicine-activities", "nhlbi-research-spectrum",
+    "nhlbi-sleep-science-and-sleep-disorders", "nhlbi-womens-health", "anvil", "hca", "zoonomics",
+    "terra", "cfde", "firecloud", "allofus", "openaccess", "ifgc", "schare", "stanleycenter",
+    "getzlab", "broadasd", "pbn", "pgc", "broadsczbd", "esp", "broadibd", "helmsley", "ged",
+    "ccxdp", "ncpi-duo", "count-me-in", "nasa", "nasa2", "ga4gh", "crispi", "hartwig", "mhgc"
+  ],
+  "requestFields": ["view", "scope", "search", "filters", "facets", "sort", "page", "projection"],
+  "scopes": {
+    "library": [],
+    "ownedByMe": ["DATASUBMITTER", "CHAIRPERSON", "ADMIN"],
+    "dacIds": ["CHAIRPERSON", "MEMBER", "ADMIN"],
+    "studyId": [],
+    "datasetIds": [],
+    "datasetIdentifiers": []
+  },
+  "filters": {
+    "accessManagement": "text",
+    "dataUse": "text",
+    "dataUseModifiers": "text",
+    "dataType": "text",
+    "dac": "text",
+    "participantCount": "number-range",
+    "soApprovalModel": "text",
+    "instantApproval": "boolean"
+  },
+  "facets": ["accessManagement", "dataUse", "dataUseModifiers", "dataType", "dac"],
+  "sorts": ["datasetName", "studyName", "accessManagement", "dac", "datasetIdentifier", "participantCount"],
+  "projections": {
+    "library": [
+      "datasetId", "datasetIdentifier", "datasetName", "study.studyId", "study.studyName",
+      "accessManagement", "dacApproval", "requestLocation", "soApprovalModel", "participantCount",
+      "dacId", "dac.dacName", "dataLocation", "url", "instantApprovalEligible", "dataUse"
+    ],
+    "submission": [
+      "datasetId", "datasetIdentifier", "datasetName", "study.studyId", "study.studyName",
+      "accessManagement", "dacApproval", "requestLocation", "soApprovalModel", "participantCount",
+      "dacId", "dac.dacName", "dataLocation", "url", "instantApprovalEligible", "dataUse",
+      "createUserDisplayName", "study.dataCustodianEmail", "deletable"
+    ],
+    "dacTable": [
+      "datasetId", "datasetIdentifier", "datasetName", "dacId", "dac.dacName", "dac.dacEmail",
+      "dacApproval", "deletable", "hasInstitutionCertification", "dataUse", "dataLocation", "url",
+      "createUserDisplayName", "submitter.displayName", "study.studyId", "study.studyName",
+      "study.phsId", "study.description", "study.species", "study.piName", "study.dataTypes",
+      "study.dataCustodianEmail", "study.dataSubmitterEmail"
+    ],
+    "dataUse": ["datasetId", "dacId", "dac.dacId", "dac.dacName", "dataUse"],
+    "selection": ["datasetId", "accessManagement", "dacApproval", "dacId"],
+    "detail": [
+      "datasetId", "datasetIdentifier", "datasetName", "accessManagement", "requestLocation",
+      "dataLocation", "url", "participantCount", "dacId", "instantApprovalEligible", "dataUse",
+      "study.studyName", "study.description", "study.phenotype", "study.piName",
+      "study.dataCustodianEmail"
+    ]
+  },
+  "scopeProjections": {
+    "library": { "permitted": ["library"], "default": "library" },
+    "ownedByMe": { "permitted": ["library", "submission"], "default": "submission" },
+    "dacIds": {
+      "permitted": ["dacTable", "dataUse"],
+      "default": "dataUse",
+      "roleDefaults": { "CHAIRPERSON": "dacTable", "ADMIN": "dacTable" }
+    },
+    "studyId": { "permitted": ["library", "selection"], "default": "library" },
+    "datasetIds": { "permitted": ["dataUse", "detail"], "default": "dataUse" },
+    "datasetIdentifiers": { "permitted": ["dataUse", "detail"], "default": "dataUse" }
+  },
+  "projectionRoles": { "dacTable": ["CHAIRPERSON", "ADMIN"] },
+  "singleIdProjections": ["detail"]
+}
