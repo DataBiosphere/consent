@@ -9,7 +9,8 @@
     "page": { "offset": 0, "limit": 1 }
   },
   "response": {
-    "status": 200,
-    "body": { "view": "datasets", "total": 0, "page": {"offset": 0, "limit": 1}, "results": [] }
+    "status": 404,
+    "body": { "message": "Not found: datasetIdentifiers", "code": 404 },
+    "serverCheck": "no dataset has identifier DUOS-999999: the same status and body as a dataset the user cannot see (Q13)"
   }
 }

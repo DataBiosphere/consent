@@ -4,7 +4,7 @@
   "user": { "roles": ["RESEARCHER"] },
   "request": {
     "view": "datasets",
-    "scope": { "datasetIds": [101, 102, 205] },
+    "scope": { "datasetIds": [101, 102] },
     "projection": "dataUse",
     "page": { "offset": 0, "limit": 10000 }
   },
