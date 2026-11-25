@@ -35,8 +35,8 @@ post:
       description: |
         Too many requests from this client IP; retry after `Retry-After` seconds. This route shares
         the support limit with `POST /support/request` and `POST /support/upload`
-        (`rateLimit.support.requestsPerMinute`, 30 a minute by default), which is for the whole
-        deployment and split across Consent's pods.
+        (`rateLimit.support.requestsPerMinute`, 30 by default): a burst of 30, then 30 a minute, on
+        each of Consent's pods.
       headers:
         Retry-After:
           schema:

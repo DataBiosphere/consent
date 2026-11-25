@@ -8,10 +8,12 @@ import jakarta.validation.constraints.Positive;
  * Per-client-IP limit for the support form: the open {@code support/} routes, which need no DUOS
  * account, and the signed-in {@code api/support/} routes, which share the same allowance. Like the
  * showcase limit, it is on in every environment and keyed the same way (see {@link
- * PublicRateLimitConfiguration} for the trusted proxies). Its {@code requestsPerMinute} is for the
- * whole deployment, split across pods with the parent {@link RateLimitConfiguration#getPodCount()}.
- * Unlike the other limits it is not required to be at least {@code podCount}, so a small default
- * can't stop a larger deployment from starting: each pod then allows at least one request a minute.
+ * PublicRateLimitConfiguration} for the trusted proxies). Unlike the other limits, its {@code
+ * requestsPerMinute} applies on each pod and is not split across them: one person's form, its
+ * attachments and a retry can all reach one pod, and a per-pod share would refuse them there. Each
+ * pod gives a client IP a burst of {@code requestsPerMinute}, then refills at {@code
+ * requestsPerMinute} a minute, so one IP can make almost twice that in any minute that starts with
+ * a full bucket on a pod, and {@code n} times as many across {@code n} pods.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SupportRateLimitConfiguration {

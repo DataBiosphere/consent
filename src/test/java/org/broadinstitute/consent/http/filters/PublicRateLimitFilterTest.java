@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -253,6 +255,33 @@ class PublicRateLimitFilterTest {
         .logWarn(
             "Support rate limit exceeded: key=192.0.2.1, source=REAL_IP_HEADER, "
                 + "path=support/upload");
+  }
+
+  // A per-pod share would be 1 here; each pod allows the full support limit instead.
+  @Test
+  void testSupportLimitIsNotSplitAcrossPods() {
+    PublicRateLimitFilter filter = buildFilter(100, 3, true, 2);
+    mockRequest("support/request", "192.0.2.50", null);
+
+    send(filter, 2);
+    verify(requestContext, never()).abortWith(any());
+
+    send(filter, 1);
+    verify(requestContext).abortWith(any());
+  }
+
+  @Test
+  void testPreflightRequestsUseNoToken() {
+    PublicRateLimitFilter filter = buildFilter(100, 1, true, 1);
+    lenient().when(requestContext.getMethod()).thenReturn(HttpMethod.OPTIONS);
+    mockRequest("support/request", "192.0.2.50", null);
+
+    send(filter, 3);
+    verify(requestContext, never()).abortWith(any());
+
+    when(requestContext.getMethod()).thenReturn(HttpMethod.POST);
+    send(filter, 1);
+    verify(requestContext, never()).abortWith(any());
   }
 
   @Test

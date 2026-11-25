@@ -9,6 +9,7 @@ import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import jakarta.annotation.Priority;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
@@ -45,11 +46,12 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
  * checks it. A verified IP is the key. A rejected one falls back to {@code X-Real-IP}, and its
  * reason (never a header value) is added to the 429 log line.
  *
- * <p>Buckets live in-process, as in {@link RateLimitFilter}: each pod enforces {@code
- * requestsPerMinute / podCount}. The filter is {@code @PreMatching}, so it also counts requests to
- * unknown {@code showcase/} and {@code support/} paths and rejects before any body is read. It
- * returns early for every other path, so Kubernetes probes on {@code /status} and {@code /liveness}
- * never reach a bucket.
+ * <p>Buckets live in-process, as in {@link RateLimitFilter}. Each pod enforces the showcase {@code
+ * requestsPerMinute / podCount}, and the full support {@code requestsPerMinute}. The filter is
+ * {@code @PreMatching}, so it also counts requests to unknown {@code showcase/} and {@code
+ * support/} paths and rejects before any body is read. It returns early for every other path, so
+ * Kubernetes probes on {@code /status} and {@code /liveness} never reach a bucket, and it skips
+ * {@code OPTIONS}, so a CORS preflight never uses a token.
  */
 @Provider
 @PreMatching
@@ -89,15 +91,19 @@ public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLog
         Map.of(
             SHOWCASE_PATH,
             new LimitedRoute(
-                "Showcase", buckets(showcase.getRequestsPerMinute(), config.getPodCount())),
+                "Showcase",
+                buckets(perPodShare(showcase.getRequestsPerMinute(), config.getPodCount()))),
+            // Not split across pods: one person's form, its attachments and a retry can all reach
+            // one pod, and a per-pod share would refuse them there.
             SUPPORT_PATH,
-            new LimitedRoute(
-                "Support",
-                buckets(config.getSupport().getRequestsPerMinute(), config.getPodCount())));
+            new LimitedRoute("Support", buckets(config.getSupport().getRequestsPerMinute())));
   }
 
-  private static LoadingCache<String, Bucket> buckets(int requestsPerMinute, int podCount) {
-    int capacityPerPod = Math.max(1, (int) Math.ceil(requestsPerMinute / (double) podCount));
+  private static int perPodShare(int requestsPerMinute, int podCount) {
+    return Math.max(1, (int) Math.ceil(requestsPerMinute / (double) podCount));
+  }
+
+  private static LoadingCache<String, Bucket> buckets(int capacityPerPod) {
     Bandwidth limitPerPod =
         Bandwidth.builder()
             .capacity(capacityPerPod)
@@ -121,6 +127,9 @@ public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLog
 
   @Override
   public void filter(ContainerRequestContext requestContext) {
+    if (HttpMethod.OPTIONS.equals(requestContext.getMethod())) {
+      return;
+    }
     UriInfo uriInfo = requestContext.getUriInfo();
     // Logged as the caller sent it (still encoded), so an encoded %0A or %0D stays visible in the
     // log. Route matching uses the decoded segments instead.

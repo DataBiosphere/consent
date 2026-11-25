@@ -17,7 +17,8 @@ import org.broadinstitute.consent.http.filters.SignedClientIpVerifier;
  *
  * <p>{@code showcase} and {@code support} configure the separate anonymous limits for the public
  * {@code showcase/} and {@code support/} routes. They ignore {@code enabled} and {@code
- * requestsPerMinute}, and share {@code podCount}.
+ * requestsPerMinute}. {@code showcase} splits its limit across {@code podCount}; {@code support}
+ * applies its limit on each pod.
  *
  * <p>{@code clientIpSecret} and the optional {@code clientIpPreviousSecret} check the client IP
  * that the DUOS BFF signs for a request that it proxies; see {@link
