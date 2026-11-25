@@ -124,8 +124,8 @@ failure to record is logged and doesn't fail the request.
   A collection approval names the submission the official reviewed (`SubmissionApproval`: the
   latest DAR's reference id and submission date); a different submission under the collection
   lock is a 409. A closeout approval names its DAR in the path, so its body needs only the
-  submission date; it is compared under the DAR's row lock. Until every client sends it, a
-  request without it (no body or `{}`) is accepted and logged.
+  submission date; it is compared under the DAR's row lock. A request that doesn't name the
+  submission (no body or `{}`) is a 400.
   DAC automation rules skip a DAR that needs signing official approval and doesn't have it
   (`DACAutomationRuleService.triggerDACRuleSettings`). Submission also defers auto-open elections
   and DAC notices for that DAR; the approval runs the rules, then opens those elections and sends

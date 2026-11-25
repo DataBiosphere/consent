@@ -956,8 +956,8 @@ public class DarCollectionService implements ConsentLogger {
    * @param user The User initiating new elections for a collection
    * @param collection The DarCollection
    * @param request The request context
-   * @param approved The submission the official approves. Null or empty is accepted while clients
-   *     move to sending it, and logged.
+   * @param approved The submission the official approves. The resource requires it; null or empty
+   *     skips the check and is logged.
    * @return The updated DarCollection
    * @throws ConsentConflictException Can be thrown when the collection no longer requires approval,
    *     the underlying data access request does not support this operation, or its most recent

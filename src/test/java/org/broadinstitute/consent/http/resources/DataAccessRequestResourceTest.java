@@ -93,6 +93,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -2361,11 +2362,13 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     String referenceId = UUID.randomUUID().toString();
     doNothing()
         .when(dataAccessRequestService)
-        .approveDataAccessRequestCloseout(user, referenceId, null);
+        .approveDataAccessRequestCloseout(
+            user, referenceId, new SubmissionApproval(referenceId, 1L));
     when(dataAccessRequestService.findByReferenceId(referenceId))
         .thenReturn(new DataAccessRequest());
     when(datasetService.findDatasetsByIds(user, List.of())).thenReturn(List.of());
-    try (Response response = resource.approveCloseout(duosUser, request, referenceId, null)) {
+    try (Response response =
+        resource.approveCloseout(duosUser, request, referenceId, "{\"submissionDate\": 1}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -2417,16 +2420,16 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     verify(dataAccessRequestService, never()).approveDataAccessRequestCloseout(any(), any(), any());
   }
 
-  // Clients that predate the named submission send {}, which approves as before.
-  @Test
-  void testApproveCloseoutAcceptsAnEmptyBody() {
-    String referenceId = UUID.randomUUID().toString();
-    when(dataAccessRequestService.findByReferenceId(referenceId))
-        .thenReturn(new DataAccessRequest());
-    try (Response response = resource.approveCloseout(duosUser, request, referenceId, " {} ")) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  // An approval must name the submission: no body, a blank one, {} or null is refused.
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"", " ", " {} ", "null"})
+  void testApproveCloseoutRequiresTheNamedSubmission(String body) {
+    try (Response response =
+        resource.approveCloseout(duosUser, request, UUID.randomUUID().toString(), body)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
-    verify(dataAccessRequestService).approveDataAccessRequestCloseout(user, referenceId, null);
+    verify(dataAccessRequestService, never()).approveDataAccessRequestCloseout(any(), any(), any());
   }
 
   @Test
@@ -2434,8 +2437,10 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     String referenceId = UUID.randomUUID().toString();
     doThrow(BadRequestException.class)
         .when(dataAccessRequestService)
-        .approveDataAccessRequestCloseout(user, referenceId, null);
-    try (Response response = resource.approveCloseout(duosUser, request, referenceId, null)) {
+        .approveDataAccessRequestCloseout(
+            user, referenceId, new SubmissionApproval(referenceId, 1L));
+    try (Response response =
+        resource.approveCloseout(duosUser, request, referenceId, "{\"submissionDate\": 1}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
