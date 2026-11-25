@@ -11,8 +11,9 @@ to [`elasticsearch-to-postgresql-plan.md`](elasticsearch-to-postgresql-plan.md).
 
 In each pair, **outcome A** is the behavior of today, which the contract uses until product
 decides, and **outcome B** is the change. Q13 is the exception: today the ES endpoints check no
-target, so neither outcome is the behavior of today. The values are illustrative. Slice 5 turns each example
-into a JSON fixture, with the outcome in its name, so a test can select the outcome that product
+target, so neither outcome is the behavior of today. The values are illustrative. Slice 5 turns
+each example into a JSON fixture whose `outcome` field names the answers it shows (`A`, `B`, or
+`AB` when the result is the same with both), so a test can select the answers that product
 approves.
 
 ## 1. Q6: the visibility rule for a study that is not public
