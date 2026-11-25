@@ -1,0 +1,15 @@
+{
+  "example": "Q6 1.2, the study page, a Researcher who is a custodian",
+  "source": "docs/plans/typed-search-examples-open-questions.md#12-the-study-page",
+  "user": { "roles": ["RESEARCHER"], "relation": "data custodian of study 42, which is not public" },
+  "request": { "view": "studies", "scope": {"studyId": 42}, "page": {"offset": 0, "limit": 1} },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "studies",
+      "total": 1,
+      "page": { "offset": 0, "limit": 1 },
+      "results": [ {"studyId": 42, "studyName": "Kidney Study", "datasetCount": 3, "totalParticipants": 900} ]
+    }
+  }
+}

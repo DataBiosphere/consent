@@ -1,0 +1,15 @@
+{
+  "example": "Q12, the AI Models tab with the same two filters",
+  "source": "docs/plans/typed-search-examples-open-questions.md#2-q12-two-asset-filters-on-one-study",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "assets",
+    "assetType": "models",
+    "scope": { "library": null },
+    "filters": [ {"key": "modelLicense", "values": ["mit"]}, {"key": "modelFormat", "values": ["onnx"]} ]
+  },
+  "response": {
+    "status": 200,
+    "body": { "view": "assets", "total": 0, "page": {"offset": 0, "limit": 25}, "results": [] }
+  }
+}

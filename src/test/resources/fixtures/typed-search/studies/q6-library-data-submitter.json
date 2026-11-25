@@ -1,0 +1,23 @@
+{
+  "example": "Q6 1.1, the library, a Data Submitter",
+  "source": "docs/plans/typed-search-examples-open-questions.md#11-the-library",
+  "user": { "roles": ["DATASUBMITTER"], "relation": "no relation to study 42, which is not public" },
+  "request": { "view": "studies", "scope": {"library": null}, "search": "kidney" },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "studies",
+      "total": 2,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        { "studyId": 42, "studyName": "Kidney Study", "datasetCount": 3, "totalParticipants": 900 },
+        {
+          "studyId": 44,
+          "studyName": "Kidney Function Study",
+          "datasetCount": 1,
+          "totalParticipants": 300
+        }
+      ]
+    }
+  }
+}

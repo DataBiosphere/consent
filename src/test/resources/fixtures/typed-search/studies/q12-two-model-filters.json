@@ -1,0 +1,19 @@
+{
+  "example": "Q12, two model filters met by two models of study 7",
+  "source": "docs/plans/typed-search-examples-open-questions.md#2-q12-two-asset-filters-on-one-study",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "studies",
+    "scope": { "library": null },
+    "filters": [ {"key": "modelLicense", "values": ["mit"]}, {"key": "modelFormat", "values": ["onnx"]} ]
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "studies",
+      "total": 1,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [ {"studyId": 7, "studyName": "Heart Study", "datasetCount": 3, "totalParticipants": 4200} ]
+    }
+  }
+}

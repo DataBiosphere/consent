@@ -1,0 +1,11 @@
+{
+  "example": "Q6 1.2, the study page, a Researcher with no grant",
+  "source": "docs/plans/typed-search-examples-open-questions.md#12-the-study-page",
+  "user": { "roles": ["RESEARCHER"], "relation": "no relation to study 42, which is not public" },
+  "request": { "view": "studies", "scope": {"studyId": 42}, "page": {"offset": 0, "limit": 1} },
+  "response": {
+    "status": 404,
+    "body": { "message": "Not found: studyId", "code": 404 },
+    "serverCheck": "study 42 is not public and the user has no grant"
+  }
+}

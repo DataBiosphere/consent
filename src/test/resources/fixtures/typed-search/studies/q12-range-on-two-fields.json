@@ -1,0 +1,19 @@
+{
+  "example": "Q12, a range on two fields met by two trials of study 9",
+  "source": "docs/plans/typed-search-examples-open-questions.md#2-q12-two-asset-filters-on-one-study",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "studies",
+    "scope": { "library": null },
+    "filters": [ {"key": "clinicalTrialDates", "gte": "2019-01-01", "lte": "2025-12-31"} ]
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "studies",
+      "total": 1,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [ {"studyId": 9, "studyName": "Lung Study", "datasetCount": 2, "totalParticipants": 800} ]
+    }
+  }
+}

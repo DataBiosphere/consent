@@ -1,0 +1,28 @@
+{
+  "example": "Q6 1.3, dataset ids, chair of the DAC of dataset 105",
+  "source": "docs/plans/typed-search-examples-open-questions.md#13-dataset-ids",
+  "user": { "roles": ["CHAIRPERSON"], "relation": "chair of the DAC of dataset 105" },
+  "request": { "view": "datasets", "scope": {"datasetIds": [101, 105]}, "page": {"offset": 0, "limit": 10000} },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "datasets",
+      "total": 2,
+      "page": { "offset": 0, "limit": 10000 },
+      "results": [
+        {
+          "datasetId": 101,
+          "dacId": 3,
+          "dac": { "dacId": 3, "dacName": "Broad DAC" },
+          "dataUse": { "primary": [{"code": "GRU", "description": "General research use"}], "secondary": [] }
+        },
+        {
+          "datasetId": 105,
+          "dacId": 3,
+          "dac": { "dacId": 3, "dacName": "Broad DAC" },
+          "dataUse": { "primary": [{"code": "GRU", "description": "General research use"}], "secondary": [] }
+        }
+      ]
+    }
+  }
+}
