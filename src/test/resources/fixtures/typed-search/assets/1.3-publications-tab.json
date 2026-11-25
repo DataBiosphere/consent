@@ -1,0 +1,52 @@
+{
+  "example": "assets 1.3, Publications tab",
+  "source": "docs/plans/typed-search-examples-assets.md#13-publications-tab-a-type-with-position-keys",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "assets",
+    "assetType": "publications",
+    "scope": { "library": null },
+    "filters": [
+      { "key": "publicationJournal", "values": ["Nature Genetics"] },
+      { "key": "publicationPublishedDate", "gte": "2020-01-01", "lte": "2024-12-31" }
+    ],
+    "sort": { "key": "publishedDate", "order": "desc" },
+    "page": { "offset": 0, "limit": 25 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "assets",
+      "total": 14,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "studyId": 7,
+          "studyName": "Heart Study",
+          "assetKey": "pos:1",
+          "publicationId": "PUB-2",
+          "title": "Variants in cardiac genes",
+          "pubmedId": "12345678",
+          "publishedDate": "2023-05-02",
+          "authors": [ {"name": "Example Author", "orcId": "0000-0000-0000-0000"} ],
+          "citation": true,
+          "datasetCitation": "DUOS-000101",
+          "journal": "Nature Genetics",
+          "doi": "10.0000/example",
+          "url": "https://example.org/pub",
+          "access": "Open",
+          "tags": [ "cardiology" ]
+        },
+        {
+          "studyId": 9,
+          "studyName": "Lung Study",
+          "assetKey": "pos:0",
+          "title": "Airway sequencing",
+          "publishedDate": "2021-11-30",
+          "authors": [ {"name": "Another Author"} ],
+          "journal": "Nature Genetics"
+        }
+      ]
+    }
+  }
+}
