@@ -8,6 +8,7 @@ Use this directory for documents that describe a proposed path forward, migratio
 
 | Plan | Purpose |
 | --- | --- |
+| `typed-search-examples-datasets.md` | [DT-3848] Examples for the `datasets` view of `POST /api/search`: one request and response for each caller that reads dataset rows today (Data Library, facet metadata, branded library, Submissions, DAC pages, DAR review, dataset page, study page), with error examples. |
 | `data-showcase-delivery-plan.md` | Plan for Data Showcase ([DT-3904](https://broadworkbench.atlassian.net/browse/DT-3904)) across consent and duos-ui: showcases as typed code entries authored by PR (like `libraryVersions.ts`), a public catalog lookup in consent, and a six-section MVP. |
 | `data-showcase-post-mvp-plan.md` | Detailed post-MVP epics (E6–E10) for the Data Showcase plan (DT-3904): ranked discovery and charts, subscriptions, RADAR automation, archive notices, and publications/impact. Each is re-planned before it starts. |
 | `data-showcase-artifact-review.md` | Companion to the Data Showcase plan (DT-3904): what the supplied design artifact actually implements, its structure, accessibility gaps, and how each finding maps to plan stories. |
