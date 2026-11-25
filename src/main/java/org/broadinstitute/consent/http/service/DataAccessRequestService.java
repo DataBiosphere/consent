@@ -463,11 +463,23 @@ public class DataAccessRequestService implements ConsentLogger {
     String referenceId = progressReport.getReferenceId();
     boolean userIsPreAuthedForDaas =
         isUserPreAuthorizedForAllDaas(user, progressReport.getDatasetIds());
+    DataAccessRequest created;
     try {
-      dataAccessRequestServiceDAO.inTransaction(
-          transactionDAOs ->
-              insertProgressReport(
-                  user, progressReport, parentDar, userIsPreAuthedForDaas, transactionDAOs));
+      created =
+          dataAccessRequestServiceDAO.inTransaction(
+              transactionDAOs -> {
+                insertProgressReport(
+                    user, progressReport, parentDar, userIsPreAuthedForDaas, transactionDAOs);
+                // Read before the commit: once the report exists, nothing may turn the request
+                // into an error, or the researcher would submit it again.
+                DataAccessRequest saved =
+                    transactionDAOs.dataAccessRequestDAO().findByReferenceId(referenceId);
+                if (saved == null) {
+                  // Rolls the report back, so the resource's cleanup can't strand it.
+                  throw new NotFoundException("No data access request found for this reference Id");
+                }
+                return saved;
+              });
     } catch (JdbiException e) {
       CollectionLocks.throwIfLockFailure(e);
       throw new BadRequestException(
@@ -476,11 +488,22 @@ public class DataAccessRequestService implements ConsentLogger {
     if (progressReport.getIsCloseoutProgressReport()) {
       notifySigningOfficialOfCloseout(progressReport, parentDar);
     } else if (!progressReport.getHasDMI() && userIsPreAuthedForDaas) {
-      ruleService.triggerDACRuleSettings(
-          user, progressReport.getDatasetIds(), referenceId, request);
+      triggerDACRulesAfterCommit(user, progressReport.getDatasetIds(), referenceId, request);
     }
+    return created;
+  }
 
-    return findByReferenceId(referenceId);
+  /**
+   * Runs the DAC automation rules for a committed request. The request already exists, so a failure
+   * is logged rather than returned; nothing retries it.
+   */
+  private void triggerDACRulesAfterCommit(
+      User user, List<Integer> datasetIds, String referenceId, ContainerRequest request) {
+    try {
+      ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
+    } catch (Exception e) {
+      logException("Unable to run the DAC rules for " + referenceId, e);
+    }
   }
 
   /** A closeout covers every dataset in the collection, ignoring the client's selection. */

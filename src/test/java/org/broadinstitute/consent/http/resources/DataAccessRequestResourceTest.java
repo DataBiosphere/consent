@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -16,6 +17,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -84,6 +86,7 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO.DocumentSave;
+import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -1316,6 +1319,50 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
     verify(gcsService).deleteDocument("copied-irb");
     verify(gcsService, never()).deleteDocument("parent-irb");
+  }
+
+  // The report exists once createProgressReport returns: a failure while logging it for compliance
+  // must not answer an error, or the researcher would submit it again.
+  @Test
+  void testPostProgressReportIsCreatedWhenTheDatasetLookupFails() {
+    DataAccessRequest childDar = mockCreatedProgressReport();
+    when(datasetService.findDatasetsByIds(user, childDar.getDatasetIds()))
+        .thenThrow(new RuntimeException("lookup failed"));
+
+    assertProgressReportCreated(childDar);
+  }
+
+  @Test
+  void testPostProgressReportIsCreatedWhenTheComplianceLogFails() {
+    DataAccessRequest childDar = mockCreatedProgressReport();
+    when(datasetService.findDatasetsByIds(user, childDar.getDatasetIds())).thenReturn(List.of());
+    try (var complianceLogger = mockStatic(ComplianceLogger.class)) {
+      complianceLogger
+          .when(() -> ComplianceLogger.logDARSubmission(any(), any(), any(), anyInt()))
+          .thenThrow(new RuntimeException("log failed"));
+
+      assertProgressReportCreated(childDar);
+    }
+  }
+
+  private DataAccessRequest mockCreatedProgressReport() {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
+    DataAccessRequest childDar = generateDataAccessRequest();
+    when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar), eq(request)))
+        .thenReturn(childDar);
+    return childDar;
+  }
+
+  private void assertProgressReportCreated(DataAccessRequest childDar) {
+    try (var response =
+        resource.postProgressReport(duosUser, request, "", "", null, null, null, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(
+          childDar.getReferenceId(), ((Map<?, ?>) response.getEntity()).get("referenceId"));
+    }
+    verify(gcsService, never()).deleteDocument(any());
   }
 
   @Test
