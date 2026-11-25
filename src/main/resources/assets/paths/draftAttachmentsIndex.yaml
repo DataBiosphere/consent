@@ -68,12 +68,16 @@ post:
             type: array
             items:
               $ref: '../schemas/FileStorageObject.yaml'
+    400:
+      description: The draft id is not a valid UUID, or a file name is invalid.
     401:
       description: User not authorized to upload file attachments
     404:
       description: The draft cannot be found.
     500:
       description: The attachments could not be saved, so none of them were added.
+    413:
+      $ref: '../responses/UploadTooLarge.yaml'
     429:
       description: Too Many Requests - rate limit exceeded
       content:

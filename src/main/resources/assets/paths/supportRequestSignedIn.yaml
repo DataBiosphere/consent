@@ -1,0 +1,45 @@
+post:
+  summary: Create a support request as a signed-in user
+  operationId: apiSupportRequestPost
+  description: |
+    The same support request as `POST /support/request`, for a signed-in user. The ticket notes that
+    the requester signed in, their DUOS user id if they have registered, and whether the form's
+    email is the sign-in email. Any sign-in works, with or without a DUOS account. Attachments still
+    go through `POST /support/upload`.
+  tags:
+    - Support
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/TicketFields.yaml'
+  responses:
+    201:
+      description: |
+        Support request submitted successfully.
+        Response contains either a `request` field (successful submission) or a `suspended_ticket` field
+        (suspended/anonymous submission).
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/SupportRequestResponse.yaml'
+    400:
+      description: |
+        Bad Request: a required field is missing, or the server is not configured for support requests
+    401:
+      description: Unauthorized
+    422:
+      description: |
+        Unprocessable Entity: provided content is not processable
+    429:
+      description: |
+        Too many requests from this client IP; retry after `Retry-After` seconds. This route shares
+        the support limit with `POST /support/request` and `POST /support/upload`
+        (`rateLimit.support.requestsPerMinute`, 30 by default): a burst of 30, then 30 a minute, on
+        each of Consent's pods.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+    500:
+      description: Internal Server Error

@@ -28,10 +28,14 @@ post:
         application/json:
           schema:
             $ref: '../schemas/DataAccessAgreement.yaml'
+    400:
+      description: The file name is invalid.
     403:
       description: User not authorized to create DAA for a DAC.
     404:
       description: Dac Not Found
+    413:
+      $ref: '../responses/UploadTooLarge.yaml'
     429:
       description: Too Many Requests - rate limit exceeded
       content:

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.configurations.PublicRateLimitConfiguration;
 import org.broadinstitute.consent.http.configurations.RateLimitConfiguration;
+import org.broadinstitute.consent.http.configurations.SupportRateLimitConfiguration;
 import org.glassfish.jersey.uri.UriComponent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,6 +58,20 @@ class PublicRateLimitFilterTest {
 
   private PublicRateLimitFilter buildFilter(
       int requestsPerMinute, int podCount, boolean authenticatedLimiterEnabled) {
+    return buildFilter(
+        requestsPerMinute,
+        podCount,
+        authenticatedLimiterEnabled,
+        SupportRateLimitConfiguration.DEFAULT_REQUESTS_PER_MINUTE);
+  }
+
+  private PublicRateLimitFilter buildFilter(
+      int requestsPerMinute,
+      int podCount,
+      boolean authenticatedLimiterEnabled,
+      int supportRequestsPerMinute) {
+    SupportRateLimitConfiguration support = new SupportRateLimitConfiguration();
+    support.setRequestsPerMinute(supportRequestsPerMinute);
     PublicRateLimitConfiguration showcase = new PublicRateLimitConfiguration();
     showcase.setRequestsPerMinute(requestsPerMinute);
     showcase.setTrustedProxies(List.of("127.0.0.1/32"));
@@ -63,6 +80,7 @@ class PublicRateLimitFilterTest {
     config.setRequestsPerMinute(100);
     config.setPodCount(podCount);
     config.setShowcase(showcase);
+    config.setSupport(support);
     return new PublicRateLimitFilter(config, servletRequest);
   }
 
@@ -222,6 +240,114 @@ class PublicRateLimitFilterTest {
     send(filter, 2);
 
     verify(requestContext).abortWith(any());
+  }
+
+  // The open Contact Us form and its attachments have their own, lower limit.
+  @Test
+  void testSupportPathsAreLimitedWithTheirOwnLimit() {
+    PublicRateLimitFilter filter = spy(buildFilter(100, 1, true, 2));
+    mockRequest("support/upload", TRUSTED_PROXY, "192.0.2.1");
+
+    send(filter, 3);
+
+    verify(requestContext).abortWith(any());
+    verify(filter)
+        .logWarn(
+            "Support rate limit exceeded: key=192.0.2.1, source=REAL_IP_HEADER, "
+                + "path=support/upload");
+  }
+
+  // A per-pod share would be 1 here; each pod allows the full support limit instead.
+  @Test
+  void testSupportLimitIsNotSplitAcrossPods() {
+    PublicRateLimitFilter filter = buildFilter(100, 3, true, 2);
+    mockRequest("support/request", "192.0.2.50", null);
+
+    send(filter, 2);
+    verify(requestContext, never()).abortWith(any());
+
+    send(filter, 1);
+    verify(requestContext).abortWith(any());
+  }
+
+  @Test
+  void testPreflightRequestsUseNoToken() {
+    PublicRateLimitFilter filter = buildFilter(100, 1, true, 1);
+    lenient().when(requestContext.getMethod()).thenReturn(HttpMethod.OPTIONS);
+    mockRequest("support/request", "192.0.2.50", null);
+
+    send(filter, 3);
+    verify(requestContext, never()).abortWith(any());
+
+    when(requestContext.getMethod()).thenReturn(HttpMethod.POST);
+    send(filter, 1);
+    verify(requestContext, never()).abortWith(any());
+  }
+
+  @Test
+  void testSupportRequestAndUploadShareOneBucket() {
+    PublicRateLimitFilter filter = buildFilter(100, 1, true, 1);
+    mockRequest("support/upload", "192.0.2.50", null);
+    send(filter, 1);
+    mockRequest("support/request", "192.0.2.50", null);
+
+    send(filter, 1);
+
+    verify(requestContext).abortWith(any());
+  }
+
+  // Signing in with several accounts must not get a caller past the support limit.
+  @Test
+  void testSignedInSupportRequestsShareTheSupportBucket() {
+    PublicRateLimitFilter filter = buildFilter(100, 1, true, 1);
+    mockRequest("support/upload", "192.0.2.50", null);
+    send(filter, 1);
+    mockRequest("api/support/request", "192.0.2.50", null);
+
+    send(filter, 1);
+
+    verify(requestContext).abortWith(any());
+  }
+
+  // Matrix parameters and empty segments don't change which resource Jersey picks, so they must
+  // not change the bucket either.
+  @Test
+  void testSignedInSupportPathVariantsShareTheSupportBucket() {
+    PublicRateLimitFilter filter = buildFilter(100, 1, true, 3);
+
+    for (String path :
+        List.of("api;x=1/support/request", "api/support;y/request", "//api//support/request")) {
+      mockRequest(path, "192.0.2.50", null);
+      send(filter, 1);
+    }
+    mockRequest("support/upload", "192.0.2.50", null);
+    send(filter, 1);
+
+    verify(requestContext).abortWith(any());
+  }
+
+  @Test
+  void testOtherApiPathsAndAnApiSupportPrefixAreNotLimited() {
+    PublicRateLimitFilter filter = buildFilter(1, 1, true, 1);
+
+    for (String path : List.of("api", "api/supporting", "api/dar/support")) {
+      mockPath(path);
+      send(filter, 5);
+    }
+
+    verify(requestContext, never()).abortWith(any());
+  }
+
+  @Test
+  void testSupportAndShowcaseHaveSeparateBuckets() {
+    PublicRateLimitFilter filter = buildFilter(1, 1, true, 1);
+    mockRequest("showcase/datasets", "192.0.2.50", null);
+    send(filter, 1);
+    mockRequest("support/request", "192.0.2.50", null);
+
+    send(filter, 1);
+
+    verify(requestContext, never()).abortWith(any());
   }
 
   @Test

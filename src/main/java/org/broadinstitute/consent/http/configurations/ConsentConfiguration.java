@@ -6,6 +6,7 @@ import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.core.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -52,6 +53,9 @@ public class ConsentConfiguration extends Configuration {
   @Valid @NotNull @JsonProperty
   private final ShowcaseConfiguration showcase = new ShowcaseConfiguration();
 
+  @Valid @NotNull @JsonProperty
+  private final UploadConfiguration uploads = new UploadConfiguration();
+
   public DataSourceFactory getDataSourceFactory() {
     return database;
   }
@@ -88,7 +92,22 @@ public class ConsentConfiguration extends Configuration {
     return liquibase;
   }
 
+  public UploadConfiguration getUploadConfiguration() {
+    return uploads;
+  }
+
   public ShowcaseConfiguration getShowcaseConfiguration() {
     return showcase;
+  }
+
+  /**
+   * A file arrives inside an upload request, so the file limit has to be below the request limit:
+   * otherwise a file within its limit can be cut off by the request limit, and an endpoint that
+   * reads the body itself (support attachments) answers 500 rather than 413.
+   */
+  @SuppressWarnings("unused") // invoked reflectively by Bean Validation via @AssertTrue
+  @AssertTrue(message = "googleStore.maxUploadBytes must be less than uploads.maxRequestBytes")
+  public boolean isFileLimitBelowRequestLimit() {
+    return googleStore.getMaxUploadBytes() < uploads.getMaxRequestBytes();
   }
 }

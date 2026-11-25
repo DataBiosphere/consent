@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -10,23 +9,27 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.broadinstitute.consent.http.models.support.DuosTicket;
-import org.broadinstitute.consent.http.models.support.TicketFactory;
+import java.io.InputStream;
+import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
+import org.broadinstitute.consent.http.configurations.StoreConfiguration;
+import org.broadinstitute.consent.http.filters.UploadSizeLimited;
+import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.broadinstitute.consent.http.service.SupportRequestService;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.owasp.fileio.FileValidator;
 
 @Path("support")
 public class SupportResource extends Resource {
 
   private final SupportRequestService supportRequestService;
-  private static final Gson gson = GsonUtil.getInstance();
-  static final long MAX_FILE_UPLOAD_SIZE = new FileValidator().getMaxFileUploadSize();
+
+  /** The largest attachment, the same limit as stored uploads (googleStore.maxUploadBytes). */
+  private final long maxUploadBytes;
 
   @Inject
-  public SupportResource(SupportRequestService supportRequestService) {
+  public SupportResource(
+      SupportRequestService supportRequestService, StoreConfiguration storeConfiguration) {
     this.supportRequestService = supportRequestService;
+    this.maxUploadBytes = storeConfiguration.getMaxUploadBytes();
   }
 
   @POST
@@ -35,10 +38,9 @@ public class SupportResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   public Response postRequest(String body) {
     try {
-      TicketFields ticketFields = gson.fromJson(body, TicketFields.class);
-      DuosTicket ticket = TicketFactory.createTicket(ticketFields);
-      logInfo("Support Request Ticket: " + ticket);
-      JsonObject request = supportRequestService.postTicketToSupport(ticket);
+      JsonObject request =
+          supportRequestService.submitTicket(
+              TicketFields.fromJson(body), SupportRequester.unverified());
       return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(request).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -47,12 +49,16 @@ public class SupportResource extends Resource {
 
   @POST
   @Path("upload")
+  @UploadSizeLimited
   @Consumes("application/binary")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response postUpload(byte[] content) {
+  public Response postUpload(InputStream body) {
     try {
-      if (content.length > MAX_FILE_UPLOAD_SIZE) {
-        return Response.status(Response.Status.BAD_REQUEST).build();
+      // Reads one byte past the limit at most, so an oversized body is never read whole. The
+      // limit's bounds (StoreConfiguration) keep that within one array.
+      byte[] content = body.readNBytes(Math.toIntExact(maxUploadBytes + 1));
+      if (content.length > maxUploadBytes) {
+        throw new UploadTooLargeException(maxUploadBytes);
       }
       JsonObject token = supportRequestService.postAttachmentToSupport(content);
       logInfo("Support Request Content Upload: " + content.length + " bytes");

@@ -316,6 +316,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               approved_collections.first_submission AS submission_date,
               latest_dar.submission_date AS expiration_basis_date,
               closeouts.closeout_date,
+              -- The database clock wrote the dates above, so the mapper tells whether access has
+              -- lapsed as of the same clock
+              NOW() AS as_of,
               approved_collections.approval_date,
               approved_collections.progress_report_approval_dates,
               latest_dar.reference_id,
@@ -373,8 +376,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * <p>The display record has to come from a qualifying DAR rather than from whatever the
    * collection's newest submission happens to be. This section presents each row as a granted
    * request, and {@link DarMetricsSummaryMapper} derives the current/expired chip from the sourced
-   * DAR's submission date; a progress report still awaiting the outcome of its own election would
-   * otherwise overwrite the grant's title, RUS, and date and reset it to "current".
+   * DAR's submission date as of the database clock ({@code as_of}); a progress report still
+   * awaiting the outcome of its own election would otherwise overwrite the grant's title, RUS, and
+   * date and reset it to "current".
    *
    * @param studyId the study to filter by
    * @return list of {@link DarMetricsSummary}, one per qualifying collection, newest grant first
@@ -445,6 +449,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               approved_collections.first_submission AS submission_date,
               latest_dar.submission_date AS expiration_basis_date,
               closeouts.closeout_date,
+              -- The database clock wrote the dates above, so the mapper tells whether access has
+              -- lapsed as of the same clock
+              NOW() AS as_of,
               approved_collections.approval_date,
               approved_collections.progress_report_approval_dates,
               latest_dar.reference_id,

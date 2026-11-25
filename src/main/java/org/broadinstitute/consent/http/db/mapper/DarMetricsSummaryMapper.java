@@ -28,7 +28,7 @@ public class DarMetricsSummaryMapper implements RowMapper<DarMetricsSummary> {
         rs.getString("rus"),
         rs.getString("reference_id"),
         rs.getString("institution_name"),
-        hasLapsed(closeoutDate != null ? closeoutDate : expirationDate),
+        hasLapsed(closeoutDate != null ? closeoutDate : expirationDate, rs.getTimestamp("as_of")),
         rs.getTimestamp("approval_date"),
         timestamps(rs.getArray("progress_report_approval_dates")),
         expirationDate,
@@ -42,10 +42,15 @@ public class DarMetricsSummaryMapper implements RowMapper<DarMetricsSummary> {
    * restate it.
    */
   private static Timestamp termEnd(Timestamp latestApprovedSubmission) {
-    return latestApprovedSubmission == null
-        ? null
-        : new Timestamp(
+    if (latestApprovedSubmission == null) {
+      return null;
+    }
+    Timestamp termEnd =
+        new Timestamp(
             latestApprovedSubmission.getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS);
+    // getTime() has no microseconds. Keep them, or the term ends up to a millisecond early.
+    termEnd.setNanos(latestApprovedSubmission.getNanos());
+    return termEnd;
   }
 
   /**
@@ -60,9 +65,14 @@ public class DarMetricsSummaryMapper implements RowMapper<DarMetricsSummary> {
     return closeoutDate;
   }
 
-  /** Access ends when its term runs out or a closeout cuts it short, whichever happened. */
-  private static boolean hasLapsed(Timestamp accessEnd) {
-    return accessEnd != null && accessEnd.getTime() < System.currentTimeMillis();
+  /**
+   * Access ends when its term runs out or a closeout cuts it short, whichever happened. The query
+   * reads {@code asOf} from the database clock, which also wrote the submission dates. The Java
+   * clock can differ from that clock, so this method does not read it. Access that ends at {@code
+   * asOf} has lapsed, as it has in the grant queries.
+   */
+  private static boolean hasLapsed(Timestamp accessEnd, Timestamp asOf) {
+    return accessEnd != null && !accessEnd.after(asOf);
   }
 
   private static List<Timestamp> timestamps(Array array) throws SQLException {

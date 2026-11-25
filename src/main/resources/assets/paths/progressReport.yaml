@@ -47,7 +47,8 @@ post:
           schema:
             $ref: '../schemas/DataAccessRequest.yaml'
     400:
-      description: Bad request
+      description: >-
+        Bad request.
       content:
         application/json:
           schema:
@@ -74,6 +75,8 @@ post:
         application/json:
           schema:
             $ref: '../schemas/ErrorResponse.yaml'
+    413:
+      $ref: '../responses/UploadTooLarge.yaml'
     429:
       description: Too Many Requests - rate limit exceeded
       content:

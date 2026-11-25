@@ -21,10 +21,21 @@ post:
                 type: string
                 description: The upload token that represents this upload request
     400:
-      description: | 
-        Bad Request: max file upload size is 5 MB or server not configured for uploads
+      description: |
+        Bad Request: the server isn't configured for uploads
+    413:
+      $ref: '../responses/UploadTooLarge.yaml'
     422:
       description: |
         Unprocessable Entity: provided content is not processable
+    429:
+      description: |
+        Too many requests from this client IP; retry after `Retry-After` seconds. Support requests
+        and uploads share one limit (`rateLimit.support.requestsPerMinute`, 30 by default): a burst
+        of 30, then 30 a minute, on each of Consent's pods.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
     500:
       description: Internal Server Error

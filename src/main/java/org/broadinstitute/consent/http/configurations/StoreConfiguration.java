@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.configurations;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -18,8 +20,11 @@ public class StoreConfiguration {
 
   /**
    * The largest document an upload may store, in bytes. Uploads stream to the bucket and stop past
-   * it, whatever size the client declares. Defaults to 25 MB.
+   * it, whatever size the client declares. Defaults to 25 MB. Bounded so a support attachment, read
+   * into one array, fits.
    */
+  @Min(1)
+  @Max(2_000_000_000L)
   private long maxUploadBytes = 25_000_000L;
 
   public String getPassword() {

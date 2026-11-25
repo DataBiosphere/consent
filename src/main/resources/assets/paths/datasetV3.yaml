@@ -61,11 +61,14 @@ post:
             items:
               $ref: '../schemas/Dataset.yaml'
     400:
-      description: Bad Request (invalid input)
+      description: >-
+        Bad Request (invalid input).
     401:
       description: Unauthorized.
     409:
       description: Dataset Name given is already in use by another dataset
+    413:
+      $ref: '../responses/UploadTooLarge.yaml'
     429:
       description: Too Many Requests - rate limit exceeded
       content:

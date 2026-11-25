@@ -65,6 +65,22 @@ class RateLimitConfigurationTest {
   }
 
   @Test
+  void testSupportDefaultsAreValid() {
+    RateLimitConfiguration config = buildConfig(100, 3);
+
+    assertTrue(validator.validate(config).isEmpty());
+    assertEquals(30, config.getSupport().getRequestsPerMinute());
+  }
+
+  @Test
+  void testSupportRequestsPerMinuteMustBePositive() {
+    RateLimitConfiguration config = buildConfig(100, 3);
+    config.getSupport().setRequestsPerMinute(0);
+
+    assertEquals(1, validator.validate(config).size());
+  }
+
+  @Test
   void testShowcaseRequestsPerMinuteLessThanPodCountIsInvalid() {
     RateLimitConfiguration config = buildConfig(100, 3);
     config.getShowcase().setRequestsPerMinute(2);
