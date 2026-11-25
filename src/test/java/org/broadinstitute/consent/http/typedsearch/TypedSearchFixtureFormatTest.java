@@ -17,13 +17,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * Checks the format of each typed search fixture ({@code README.md} in the fixture folder): the
- * fields, the source document, the user, the outcome tags, and the response envelope. The request
- * and the response body are checked against the contract by their own tests.
+ * fields, the source document, the user, and the response envelope. The request and the response
+ * body are checked against the contract by their own tests.
  */
 class TypedSearchFixtureFormatTest {
 
   private static final Set<Integer> ERROR_STATUSES = Set.of(400, 403, 404, 413, 429, 500, 504);
-  private static final Set<String> QUESTIONS = Set.of("Q6", "Q12", "Q13", "Q15");
 
   static Stream<String> fixtures() throws Exception {
     return TypedSearchFixtures.fixtures();
@@ -49,7 +48,7 @@ class TypedSearchFixtureFormatTest {
     List<String> errors = new ArrayList<>();
     fields(
         fixture,
-        Set.of("example", "source", "user", "outcome", "request", "response"),
+        Set.of("example", "source", "user", "request", "response"),
         Set.of("example", "source", "user", "request", "response"),
         "fixture",
         errors);
@@ -69,21 +68,6 @@ class TypedSearchFixtureFormatTest {
         errors.add("unknown role: " + role);
       }
     }
-
-    JsonNode outcome = fixture.path("outcome");
-    boolean tagged = outcome.isObject() && !outcome.isEmpty();
-    if (tagged != name.startsWith("open-questions") || fixture.has("outcome") != tagged) {
-      errors.add("outcome is a non-empty object in open-questions/, and only there");
-    }
-    outcome
-        .properties()
-        .forEach(
-            e -> {
-              if (!QUESTIONS.contains(e.getKey())
-                  || !Set.of("A", "B", "AB").contains(e.getValue().asText())) {
-                errors.add("outcome must map Q6, Q12, Q13, or Q15 to A, B, or AB");
-              }
-            });
 
     JsonNode response = fixture.path("response");
     int status = response.path("status").asInt();
