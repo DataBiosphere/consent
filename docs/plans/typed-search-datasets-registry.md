@@ -64,7 +64,7 @@ The server adds these rules to each `datasets` query. The caller cannot remove t
 | `library` | Yes | Yes | Yes | Data Library, Datasets tab |
 | `ownedByMe` | No: every role that can use the scope is exempt | No | Yes | Submissions, Datasets tab |
 | `dacIds` | No | No | No | DAC Datasets, Manage DAC, DAC profile |
-| `studyId` | Yes, with the DAC Member grant; the user gets the datasets they can see, and 404 if none | No | Yes (by the scope) | Study page |
+| `studyId` | Yes, with the DAC Member grant; a hidden study gets 404, but a user whose only grant is the dataset creator gets the datasets they created | No | Yes (by the scope) | Study page |
 | `datasetIds`, `datasetIdentifiers` | Yes, with the DAC Member and submitted DAR grants; a hidden dataset gets 404 | No | No | DAR review, DUC addendum, dataset page |
 
 - **Public visibility rule:** the study has `publicVisibility = true`, or the user has one of the
