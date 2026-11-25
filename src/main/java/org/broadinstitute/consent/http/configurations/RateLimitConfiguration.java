@@ -15,8 +15,10 @@ import org.broadinstitute.consent.http.filters.SignedClientIpVerifier;
  * up to a 1-request-per-minute floor and the deployment-wide aggregate would exceed the configured
  * limit.
  *
- * <p>{@code showcase} configures the separate anonymous limit for the public {@code showcase/}
- * routes. It ignores {@code enabled} and {@code requestsPerMinute}, and shares {@code podCount}.
+ * <p>{@code showcase} and {@code support} configure the separate anonymous limits for the public
+ * {@code showcase/} and {@code support/} routes. They ignore {@code enabled} and {@code
+ * requestsPerMinute}. {@code showcase} splits its limit across {@code podCount}; {@code support}
+ * applies its limit on each pod.
  *
  * <p>{@code clientIpSecret} and the optional {@code clientIpPreviousSecret} check the client IP
  * that the DUOS BFF signs for a request that it proxies; see {@link
@@ -38,6 +40,9 @@ public class RateLimitConfiguration {
 
   @Valid @NotNull
   private PublicRateLimitConfiguration showcase = new PublicRateLimitConfiguration();
+
+  @Valid @NotNull
+  private SupportRateLimitConfiguration support = new SupportRateLimitConfiguration();
 
   private static final int MIN_CLIENT_IP_SECRET_LENGTH = 32;
 
@@ -75,6 +80,14 @@ public class RateLimitConfiguration {
 
   public void setShowcase(PublicRateLimitConfiguration showcase) {
     this.showcase = showcase;
+  }
+
+  public SupportRateLimitConfiguration getSupport() {
+    return support;
+  }
+
+  public void setSupport(SupportRateLimitConfiguration support) {
+    this.support = support;
   }
 
   public String getClientIpSecret() {
