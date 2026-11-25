@@ -106,14 +106,36 @@ cannot remove them, and the request has no field for them.
 | Scope | Request | Who can use it (design section 7.4a) | Target check |
 | --- | --- | --- | --- |
 | Library | `{ "library": "<key>" }`, or `{ "library": null }` for the full library | Each signed-in user | The key must be in the server list of branded libraries. The "my institution" library uses the institution from the session. For a user with no institution it returns no rows, as today (duos-ui sends institution id 0). |
-| Owned by the user | `{ "ownedByMe": true }`. With the `assets` view, for the asset tabs of the Submissions page. | Data Submitter, Chairperson, Admin | None. The user id and email come from the session. |
-| DAC | `{ "dacIds": [1, 2] }` | Chairperson and Member for their DACs, Admin for each DAC | Each DAC id must be a DAC of the user, unless the user is an Admin. |
-| One study | `{ "studyId": 42 }` | Pending product decision Q6 | Pending product decision Q6 |
-| Dataset ids | `{ "datasetIds": [10, 11] }` | Pending product decision Q6 | Pending product decision Q6 |
+| Owned by the user | `{ "ownedByMe": true }`. With the `assets` view, for the asset tabs of the Submissions page. | Data Submitter, Chairperson, Admin | None. The user id and email come from the session. A dataset is owned if the user created it, submitted its study, or is a data custodian of its study: the email of the user equals one of the custodian emails (Q15). |
+| DAC | `{ "dacIds": [1, 2] }` | Chairperson and Member for their DACs, Admin for each DAC | Each DAC id must be a DAC of the user. Otherwise 404. An Admin sees each DAC: an id that does not exist adds no rows. |
+| One study | `{ "studyId": 42 }` | Each signed-in user | The study must be visible to the user (below). Otherwise 404. In the `datasets` view, a user who sees only some datasets of the study (the dataset creator grant) gets those rows, and 404 only if they see none. |
+| Dataset ids | `{ "datasetIds": [10, 11] }` | Each signed-in user | Each dataset must be visible to the user (below). Otherwise the whole request gets 404. |
 | Dataset identifiers | `{ "datasetIdentifiers": ["DUOS-000123"] }` | As dataset ids | As dataset ids. For the dataset page, which looks a dataset up by its identifier (`DatasetStatistics.tsx`). An identifier matches the full identifier without regard to case, as the ES `match_phrase` does today. |
 
-Until product decides question 6, the study scope and the two dataset scopes stay open to each
-signed-in user, as they are today. The examples for both outcomes are in DT-3848 slice 4.
+**Visibility of a study that is not public (Q6).** A study with `publicVisibility` not `true`, its
+datasets, and its assets are visible to a user who:
+
+- has the Chairperson, Data Submitter, Admin, or Signing Official role, in each scope, as today in
+  the Data Library;
+- is a Member of the DAC of a dataset of the study, in the study scope and the two dataset scopes
+  (the study page and DAR review), for the datasets of that DAC; the library stays as today for
+  a Member;
+- created the study, or is one of its data custodians: the email of the user equals one of the
+  custodian emails after trimming, with regard to case (`DatasetService.isCreatorOrCustodian`);
+- created the dataset, for that dataset only: the study row and the asset rows of the study stay
+  hidden from that user;
+- in the two dataset scopes only, is the researcher of a submitted DAR that has the dataset
+  (the DAR pages and the DUC addendum of a submitted DAR). A draft or a canceled DAR gives no
+  grant: the draft endpoint accepts any dataset id.
+
+A dataset without a study stays visible to each user, as `DatasetService.readBasis` has it today.
+The rule applies to the library, the study scope, the two dataset scopes, the `assets` view, and
+the `counts` view. The DAC scope keeps its own rule, and the owned-by-the-user scope is exempt, as
+today. An Admin sees everything. For any other user, a target that the user cannot see gets 404,
+the same status and body as a target that does not exist (Q13), so a hidden study cannot be told
+from a missing one. duos-ui shows a 404 on the dataset page as an error today; DT-4512 maps it to
+"not found". The decisions are in DT-3848 (comment of 2026-11-25) and
+[`typed-search-examples-open-questions.md`](typed-search-examples-open-questions.md).
 
 The `assets` view accepts the library scope and the owned-by-the-user scope. Another scope with
 `assets` gets a 400.
@@ -142,8 +164,7 @@ scope.
 - A range on a text key, or `values` on a key that permits only a range, gets a 400.
 - Filters combine with AND. Values in one filter combine with OR.
 - In the `datasets` and `studies` views, two filters on asset fields can match two different
-  assets of one study, as today. Product question Q12 can change this. Slice 4 has the examples for
-  both outcomes.
+  assets of one study, as today (Q12, decided to keep this).
 - In the `assets` view, the row filters of the requested type apply to the asset row, so they all
   must match the same asset. The study filters narrow the studies (section 2).
 - The registry gives each text key its match: "one of" (equal to one of the values) or "contains"
@@ -307,16 +328,16 @@ The errors that the endpoint returns use the existing consent error body:
 | 401 | The caller is not signed in. The consent authentication filter answers before the endpoint, with a plain text body, not the JSON body. |
 | 403 | The user cannot use the requested scope (design section 7.4a). The server returns 403, not an empty result. |
 | 429 | The consent rate limit for `/api/` (`RateLimitFilter`). The response has a `Retry-After` header and no body. |
-| 403 or 404 | A target id of the scope (a DAC, a study, a dataset) that the user cannot read. Pending product decision Q13. Slice 4 has the examples for both outcomes. |
+| 404 | A target id of the scope (a DAC, a study, a dataset) that the user cannot read or that does not exist, with the same body for both (Q13). Not for an Admin, who sees each target. |
 | 413 | The body is larger than 1,048,576 bytes. |
 | 504 | The queries of the request took more than 30 seconds. |
 | 500 | Any other server failure. The body has a fixed message, `Search failed`. |
 
 - **Order of the checks.** The server parses the body and checks the `scope` first; a body that
   is not JSON, or a scope that is not valid or that the view does not accept (section 3, and the
-  documents of each view), gets a 400. If the roles of the user cannot
-  use the scope, the response is 403, even when the request breaks another rule. Then the server
-  checks the rest of the request (400), and then the target ids of the scope (403 or 404, Q13).
+  documents of each view), gets a 400. If the roles of the user cannot use the scope, the response
+  is 403, even when the request breaks another rule. Then the server checks the rest of the request
+  (400), and then the target ids of the scope (404).
   A user who cannot use a scope thus learns nothing about the other rules from its responses.
 - The `message` names the field or the limit. A key from the request is cut to 64 characters in
   the message, as `ShowcaseLookupException` does. The message never repeats the `search` text or a
@@ -327,14 +348,14 @@ The errors that the endpoint returns use the existing consent error body:
   know, it also puts the exception message in the 500 body. The endpoint logs the exception class
   and the request view and scope kind only.
 
-## 10. Open product decisions
+## 10. Product decisions
 
-These design questions (section 11) change parts of the contract. Until product answers, this
-contract and its examples use the behavior of today, and slice 4 shows both outcomes.
+The design (section 11) left four questions to product. They were decided on 2026-11-25 (DT-3848
+comment), and this contract follows the answers:
 
-| Question | Part of the contract |
-| --- | --- |
-| Q6: the contract rule or the role rule for a study that is not public | The visibility rules of each scope, and who can use the study and dataset id scopes |
-| Q12: can two asset filters match two different assets of one study | Section 4 |
-| Q13: 403 or 404 for a target that the user cannot read | Section 9 |
-| Q15: does the ownership clause match the data custodian email | The owned-by-the-user scope |
+| Question | Answer | Part of the contract |
+| --- | --- | --- |
+| Q6: who sees a study that is not public | Today's rules, and the study is hidden from researchers in each scope, with the grants of section 3 | Section 3 |
+| Q12: can two asset filters match two different assets of one study | Yes, as today | Section 4 |
+| Q13: 403 or 404 for a target that the user cannot read | 404, the same as a target that does not exist | Section 9 |
+| Q15: does the ownership rule match the data custodian email | Yes: the rule is corrected | Section 3 |
