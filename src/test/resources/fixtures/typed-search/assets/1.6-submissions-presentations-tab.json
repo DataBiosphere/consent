@@ -1,0 +1,33 @@
+{
+  "example": "assets 1.6, Submissions Presentations tab",
+  "source": "docs/plans/typed-search-examples-assets.md#16-submissions-presentations-tab",
+  "user": { "roles": ["DATASUBMITTER"] },
+  "request": {
+    "view": "assets",
+    "assetType": "presentations",
+    "scope": { "ownedByMe": true },
+    "filters": [ {"key": "presentationFormat", "values": ["Poster"]} ],
+    "page": { "offset": 0, "limit": 25 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "assets",
+      "total": 2,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "studyId": 7,
+          "studyName": "Heart Study",
+          "assetKey": "pos:0",
+          "title": "Cohort overview",
+          "date": "2022-10-01",
+          "presenter": { "name": "Example Presenter", "email": "presenter@example.org" },
+          "event": "ASHG",
+          "format": "Poster",
+          "access": "Open"
+        }
+      ]
+    }
+  }
+}

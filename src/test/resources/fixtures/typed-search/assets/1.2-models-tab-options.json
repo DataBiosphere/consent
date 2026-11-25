@@ -1,0 +1,34 @@
+{
+  "example": "assets 1.2, option lists of the AI Models tab",
+  "source": "docs/plans/typed-search-examples-assets.md#12-option-lists-of-the-ai-models-tab",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "assets",
+    "assetType": "models",
+    "scope": { "library": null },
+    "search": "cardiac",
+    "filters": [ {"key": "dataType", "values": ["WGS"]} ],
+    "facets": [
+      { "key": "modelFormat", "size": 10000 },
+      { "key": "modelLicense", "size": 10000 },
+      { "key": "modelCloud", "size": 10000 },
+      { "key": "modelTags", "size": 10000 }
+    ],
+    "page": { "offset": 0, "limit": 0 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "assets",
+      "total": 9,
+      "page": { "offset": 0, "limit": 0 },
+      "results": [],
+      "facets": {
+        "modelFormat": [ {"value": "ONNX", "count": 5}, {"value": "PyTorch", "count": 4} ],
+        "modelLicense": [ {"value": "MIT", "count": 6}, {"value": "Apache-2.0", "count": 3} ],
+        "modelCloud": [ {"value": "GCP", "count": 8}, {"value": "AWS", "count": 2} ],
+        "modelTags": [ {"value": "cardiology", "count": 7} ]
+      }
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "example": "assets 1.5, Biospecimens tab",
+  "source": "docs/plans/typed-search-examples-assets.md#15-biospecimens-tab",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "assets",
+    "assetType": "biospecimens",
+    "scope": { "library": null },
+    "filters": [
+      { "key": "biospecimenType", "values": ["BLOOD"] },
+      { "key": "biospecimenPostMortemIntervalUnit", "values": ["HOURS"] },
+      { "key": "biospecimenPostMortemInterval", "lte": 24 },
+      { "key": "participantCount", "gte": 100 }
+    ],
+    "sort": { "key": "dateOfCollection", "order": "asc" },
+    "page": { "offset": 0, "limit": 25 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "assets",
+      "total": 120,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "studyId": 11,
+          "studyName": "Tissue Study",
+          "assetKey": "id:301",
+          "biospecimenId": 301,
+          "sampleId": "S-0001",
+          "duosIdentifier": "DUOS-B-000301",
+          "donorId": "D-17",
+          "specimenType": "BLOOD",
+          "preservationMethod": "FRESH_FROZEN",
+          "dateOfCollection": "2018-03-14",
+          "postMortemInterval": { "value": 6, "unit": "HOURS" },
+          "sex": "FEMALE",
+          "age": 54,
+          "race": "Example",
+          "countryOfOrigin": "Example",
+          "extractedDiagnoses": [ "Example" ],
+          "organization": "Example Biobank"
+        }
+      ]
+    }
+  }
+}

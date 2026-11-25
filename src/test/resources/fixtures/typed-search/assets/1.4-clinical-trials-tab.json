@@ -1,0 +1,40 @@
+{
+  "example": "assets 1.4, Clinical Trials tab",
+  "source": "docs/plans/typed-search-examples-assets.md#14-clinical-trials-tab-a-range-on-two-fields",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "assets",
+    "assetType": "clinical_trials",
+    "scope": { "library": null },
+    "filters": [
+      { "key": "clinicalTrialStatus", "values": ["Recruiting", "Completed"] },
+      { "key": "clinicalTrialDates", "gte": "2019-01-01", "lte": "2025-12-31" }
+    ],
+    "page": { "offset": 0, "limit": 25 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "assets",
+      "total": 4,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "studyId": 7,
+          "studyName": "Heart Study",
+          "assetKey": "pos:0",
+          "clinicalTrialId": "CT-1",
+          "title": "Heart rhythm trial",
+          "registry": "ClinicalTrials.gov",
+          "identifier": "NCT00000001",
+          "status": "Recruiting",
+          "sponsor": "Example Sponsor",
+          "startDate": "2020-03-01",
+          "endDate": "2024-06-30",
+          "interventionType": "Drug",
+          "phase": "Phase 2"
+        }
+      ]
+    }
+  }
+}

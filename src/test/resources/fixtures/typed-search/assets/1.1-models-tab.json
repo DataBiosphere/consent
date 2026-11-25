@@ -1,0 +1,40 @@
+{
+  "example": "assets 1.1, Data Library AI Models tab",
+  "source": "docs/plans/typed-search-examples-assets.md#11-data-library-ai-models-tab",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "assets",
+    "assetType": "models",
+    "scope": { "library": null },
+    "search": "cardiac",
+    "filters": [ {"key": "modelLicense", "values": ["mit"]}, {"key": "dataType", "values": ["WGS"]} ],
+    "sort": { "key": "name", "order": "asc" },
+    "page": { "offset": 0, "limit": 25 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "assets",
+      "total": 3,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "studyId": 7,
+          "studyName": "Heart Study",
+          "assetKey": "id:45",
+          "modelId": 45,
+          "duosIdentifier": "DUOS-M-000045",
+          "name": "Arrhythmia Classifier",
+          "description": "Classifies ECG traces.",
+          "url": "https://example.org/models/45",
+          "format": "ONNX",
+          "license": "MIT",
+          "cloud": [ "GCP" ],
+          "trainedOnDatasets": [ "DUOS-000101" ],
+          "maintainer": { "name": "Example Maintainer", "email": "maintainer@example.org" },
+          "tags": [ "cardiology" ]
+        }
+      ]
+    }
+  }
+}
