@@ -1,12 +1,11 @@
 {
-  "example": "Q6 1.3, dataset ids, a Researcher with no relation, outcome B with Q13 A",
+  "example": "Q6 1.3, dataset ids, a Researcher with no grant",
   "source": "docs/plans/typed-search-examples-open-questions.md#13-dataset-ids",
   "user": { "roles": ["RESEARCHER"], "relation": "no relation to study 42, which holds dataset 105" },
-  "outcome": { "Q6": "B", "Q13": "A" },
   "request": { "view": "datasets", "scope": {"datasetIds": [101, 105]}, "page": {"offset": 0, "limit": 10000} },
   "response": {
-    "status": 403,
-    "body": { "message": "Not permitted: datasetIds", "code": 403 },
-    "serverCheck": "the user cannot read dataset 105, so the whole request fails"
+    "status": 404,
+    "body": { "message": "Not found: datasetIds", "code": 404 },
+    "serverCheck": "dataset 105 is in study 42, which is not public, and the user has no grant"
   }
 }

@@ -1,8 +1,7 @@
 {
-  "example": "Q6 1.1, the library, a Data Submitter with no relation, outcome B",
+  "example": "Q6 1.1, the library, a Researcher with no grant",
   "source": "docs/plans/typed-search-examples-open-questions.md#11-the-library",
-  "user": { "roles": ["DATASUBMITTER"], "relation": "no relation to study 42, which is not public" },
-  "outcome": { "Q6": "B" },
+  "user": { "roles": ["RESEARCHER"], "relation": "no relation to study 42, which is not public" },
   "request": { "view": "studies", "scope": {"library": null}, "search": "kidney" },
   "response": {
     "status": 200,

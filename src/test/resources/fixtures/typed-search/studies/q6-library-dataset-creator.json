@@ -1,17 +1,15 @@
 {
-  "example": "Q6 1.1, the library, a Data Submitter with no relation, outcome A",
+  "example": "Q6 1.1, the library, a Researcher who created only dataset 105",
   "source": "docs/plans/typed-search-examples-open-questions.md#11-the-library",
-  "user": { "roles": ["DATASUBMITTER"], "relation": "no relation to study 42, which is not public" },
-  "outcome": { "Q6": "A" },
+  "user": { "roles": ["RESEARCHER"], "relation": "created dataset 105 of study 42, which is not public" },
   "request": { "view": "studies", "scope": {"library": null}, "search": "kidney" },
   "response": {
     "status": 200,
     "body": {
       "view": "studies",
-      "total": 2,
+      "total": 1,
       "page": { "offset": 0, "limit": 25 },
       "results": [
-        { "studyId": 42, "studyName": "Kidney Study", "datasetCount": 3, "totalParticipants": 900 },
         {
           "studyId": 44,
           "studyName": "Kidney Function Study",

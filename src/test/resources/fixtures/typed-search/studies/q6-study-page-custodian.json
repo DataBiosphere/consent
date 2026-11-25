@@ -1,8 +1,7 @@
 {
-  "example": "Q6 1.2, the study page, a Researcher with no relation, outcome A",
+  "example": "Q6 1.2, the study page, a Researcher who is a custodian",
   "source": "docs/plans/typed-search-examples-open-questions.md#12-the-study-page",
-  "user": { "roles": ["RESEARCHER"], "relation": "no relation to study 42, which is not public" },
-  "outcome": { "Q6": "A" },
+  "user": { "roles": ["RESEARCHER"], "relation": "data custodian of study 42, which is not public" },
   "request": { "view": "studies", "scope": {"studyId": 42}, "page": {"offset": 0, "limit": 1} },
   "response": {
     "status": 200,

@@ -1,8 +1,7 @@
 {
-  "example": "Q12 2.3, a range on two fields met by two trials of study 9, outcome A",
-  "source": "docs/plans/typed-search-examples-open-questions.md#23-a-range-on-two-fields",
+  "example": "Q12, a range on two fields met by two trials of study 9",
+  "source": "docs/plans/typed-search-examples-open-questions.md#2-q12-two-asset-filters-on-one-study",
   "user": { "roles": ["RESEARCHER"] },
-  "outcome": { "Q12": "A" },
   "request": {
     "view": "studies",
     "scope": { "library": null },

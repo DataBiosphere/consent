@@ -1,8 +1,7 @@
 {
-  "example": "Q12 2.1, two model filters on two models of study 7, outcome A",
-  "source": "docs/plans/typed-search-examples-open-questions.md#21-studies-tab-with-two-model-filters",
+  "example": "Q12, two model filters met by two models of study 7",
+  "source": "docs/plans/typed-search-examples-open-questions.md#2-q12-two-asset-filters-on-one-study",
   "user": { "roles": ["RESEARCHER"] },
-  "outcome": { "Q12": "A" },
   "request": {
     "view": "studies",
     "scope": { "library": null },
