@@ -57,7 +57,7 @@ obey this contract.
 | `search` | string | No | The search box text. Empty or absent means no text match. |
 | `filters` | array | No | Each element has a `key`, and either `values` or a range (section 4). |
 | `facets` | array | No | Facet distributions to return. Each element has a `key` and an optional `size`. A key appears at most once. |
-| `sort` | object | No | `key` and `order` (`asc` or `desc`). Section 5 gives the default. |
+| `sort` | object | No | `key`, and `order` (`asc` or `desc`, default `asc`). Section 5 gives the default sort. |
 | `page` | object | No | `offset` (0 or more, no upper limit) and `limit` (0 to 10,000). Defaults: `offset` 0, `limit` 25. `limit` 0 returns `total` and `facets` without rows, as the facet metadata request needs. |
 | `projection` | string | No | The field set of each result row. The examples documents name the projections of each view. Each view has a default. |
 
@@ -76,13 +76,15 @@ keys. Slice 3 lists them with its examples.
 - **Study filters and row filters.** A filter whose key is a row filter key of the requested asset
   type applies to the asset row. Each other filter key of the library (dataset filters, study
   filters, and the row filter keys of the other asset types) applies to the study, as today: it
-  narrows the studies whose assets the view returns. The `search` text matches the study, with the
-  search fields of the library, as today (`assets/index.ts`).
+  narrows the studies whose assets the view returns. A study has rows in the result if one of its
+  datasets matches the rules of the scope, the `search` text, and the dataset filters, all on that
+  one dataset, as one ES document does today, and if it passes the asset filters of the other
+  types. The `search` text uses the search fields of the library (`assets/index.ts`).
 - **The option corpus.** The options of a tab are the facets of the `assets` view. The caller sends
-  them in a separate request with `page.limit` 0, without the filters of the tab's own keys and
-  with every other filter, as today (`useLibraryPageState.ts`). Facets add counts, which the tabs
-  do not show today. A facet has 10,000 values at most (section 6); today the option list has no
-  limit.
+  them in a separate request with `page.limit` 0, without the filters on the tab's own facet keys
+  and with every other filter (the row filters with fixed options of the tab included), as today
+  (`useLibraryPageState.ts`). Facets add counts, which the tabs do not show today. A facet has
+  10,000 values at most (section 6); today the option list has no limit.
 
 The server rejects a request with a field that this table does not name, or with a field that the
 view does not accept (400). It does not ignore the field. Consent parses request bodies with Gson,
@@ -170,6 +172,11 @@ the parity test expects a different order for these four keys. A key that holds 
 (`dataCustodianEmail`) sorts by its lowest value in ascending order and by its highest value in
 descending order, as ES does for a field with several values.
 
+**Text order.** Each sort on a text key, and the value order of the facet buckets, compares the
+text by its bytes, with regard to case (`"Zebra"` before `"apple"`), as ES sorts a `keyword` field
+today. The server uses the `"C"` collation of PostgreSQL for these comparisons; the default
+collation of the database orders text in another way. Numbers and dates sort as numbers and dates.
+
 **Default sort.** Without `sort`:
 
 - `datasets` view: by `datasetId`, ascending.
@@ -179,7 +186,10 @@ descending order, as ES does for a field with several values.
   gives each asset row. For models, workspaces, and biospecimens it is `id:` and the record id of
   the asset (DT-4208); an entry of these types without a record id is not a row, as today. For the
   other types it is `pos:` and the position of the entry in the asset list of the study. A position
-  key changes when a submitter changes the order of the list.
+  key changes when a submitter changes the order of the list. `assetKey` sorts by its number
+  (`pos:2` before `pos:10`), so the `pos:` rows of a study keep the order of its list, as the browser
+  shows them today. The `id:` rows sort by record id, which can differ from the list order that the
+  browser shows today; this is a change of behavior.
 
 ES orders unsorted dataset results by score, or by index order without a search. Neither order is
 the same in the two systems. The parity test (design section 9.4) thus sends an explicit sort in
@@ -240,7 +250,13 @@ The `datasets`, `studies`, and `assets` views return the page that the server us
   "view": "datasets",
   "total": 1234,
   "page": { "offset": 0, "limit": 25 },
-  "results": [ { "datasetId": 10, "datasetName": "..." } ],
+  "results": [
+    {
+      "datasetId": 10,
+      "datasetName": "...",
+      "dataUse": { "primary": [ { "code": "GRU", "description": "..." } ], "secondary": [] }
+    }
+  ],
   "facets": {
     "dac": [ { "value": "Broad DAC", "count": 812 } ]
   }
@@ -249,6 +265,11 @@ The `datasets`, `studies`, and `assets` views return the page that the server us
 
 - `results` holds plain rows with the fields of the projection. The response has no ES shapes:
   no `hits`, `_source`, `aggregations`, or `buckets`.
+- A field without a value is absent from the row: the row has no `null`, and no empty text or
+  list in place of a missing value. The one exception is `dataUse`, which is always present in a
+  projection that has it, as `{ "primary": [...], "secondary": [...] }` with empty lists when the
+  dataset has no codes, so that callers can compare it as a whole (DAR review groups datasets by
+  `dataUse`, `BucketUtils.ts`).
 - `facets` has one entry for each requested facet key. Each entry is a list of `value` and `count`,
   by count descending, then by value ascending. In the `datasets` and `studies` views, a facet counts
   datasets, as the ES facets do today (the Studies tab facets also count dataset documents). In the
@@ -291,6 +312,12 @@ The errors that the endpoint returns use the existing consent error body:
 | 504 | The queries of the request took more than 30 seconds. |
 | 500 | Any other server failure. The body has a fixed message, `Search failed`. |
 
+- **Order of the checks.** The server parses the body and checks the `scope` first; a body that
+  is not JSON, or a scope that is not valid or that the view does not accept (section 3, and the
+  documents of each view), gets a 400. If the roles of the user cannot
+  use the scope, the response is 403, even when the request breaks another rule. Then the server
+  checks the rest of the request (400), and then the target ids of the scope (403 or 404, Q13).
+  A user who cannot use a scope thus learns nothing about the other rules from its responses.
 - The `message` names the field or the limit. A key from the request is cut to 64 characters in
   the message, as `ShowcaseLookupException` does. The message never repeats the `search` text or a
   filter value.
