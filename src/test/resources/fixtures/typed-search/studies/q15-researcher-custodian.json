@@ -1,0 +1,7 @@
+{
+  "example": "Q15, a Researcher who is only a custodian",
+  "source": "docs/plans/typed-search-examples-open-questions.md#4-q15-the-data-custodian-in-the-ownership-rule",
+  "user": { "roles": ["RESEARCHER"], "relation": "data custodian of study 50" },
+  "request": { "view": "studies", "scope": {"ownedByMe": true} },
+  "response": { "status": 403, "body": {"message": "Not permitted: ownedByMe", "code": 403} }
+}
