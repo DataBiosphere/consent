@@ -1,0 +1,36 @@
+{
+  "example": "assets, Funding Resources tab with a range on two fields",
+  "source": "docs/plans/typed-search-assets-registry.md#4-filter-keys",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "assets",
+    "assetType": "funding_resources",
+    "scope": { "library": null },
+    "filters": [
+      { "key": "fundingFunderName", "values": ["NIH"] },
+      { "key": "fundingDate", "gte": "2019-01-01", "lte": "2025-12-31" }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "assets",
+      "total": 5,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "studyId": 9,
+          "studyName": "Lung Study",
+          "assetKey": "pos:1",
+          "fundingId": "R01-0001",
+          "funderName": "NIH",
+          "funderProgram": "NHLBI",
+          "grantNumber": "R01HL000001",
+          "projectTitle": "Airway study",
+          "startDate": "2019-07-01",
+          "endDate": "2024-06-30"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "example": "assets, Workspaces tab with a row filter and a sort",
+  "source": "docs/plans/typed-search-assets-registry.md#4-filter-keys",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "assets",
+    "assetType": "workspaces",
+    "scope": { "library": null },
+    "filters": [ {"key": "workspaceTools", "values": ["jupyter"]} ],
+    "sort": { "key": "platform", "order": "asc" }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "assets",
+      "total": 4,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "studyId": 7,
+          "studyName": "Heart Study",
+          "assetKey": "id:12",
+          "workspaceId": 12,
+          "duosIdentifier": "DUOS-W-000012",
+          "name": "Cardiac analysis",
+          "platform": "Terra",
+          "url": "https://example.org/ws/12",
+          "tools": [ "Jupyter" ],
+          "cloud": [ "GCP" ],
+          "access": "Controlled"
+        }
+      ]
+    }
+  }
+}

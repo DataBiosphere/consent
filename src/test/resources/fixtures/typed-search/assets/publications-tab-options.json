@@ -1,0 +1,26 @@
+{
+  "example": "assets, option lists of the Publications tab",
+  "source": "docs/plans/typed-search-assets-registry.md#5-facet-keys",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "assets",
+    "assetType": "publications",
+    "scope": { "library": null },
+    "filters": [ {"key": "publicationPublishedDate", "gte": "2020-01-01"} ],
+    "facets": [ {"key": "publicationJournal", "size": 10000}, {"key": "publicationAccess", "size": 10000} ],
+    "page": { "offset": 0, "limit": 0 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "assets",
+      "total": 14,
+      "page": { "offset": 0, "limit": 0 },
+      "results": [],
+      "facets": {
+        "publicationJournal": [ {"value": "Nature Genetics", "count": 6}, {"value": "Cell", "count": 3} ],
+        "publicationAccess": [ {"value": "Open", "count": 10}, {"value": "Restricted", "count": 4} ]
+      }
+    }
+  }
+}
