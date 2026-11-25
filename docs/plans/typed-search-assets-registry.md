@@ -35,7 +35,9 @@ value gets a 400.
   `workspaces`, and `biospecimens`, an entry without an integer record id (DT-4208) is not a row,
   as today (`withRowIds` in `definition.ts`). Every entry of the other types is a row.
 - **`assetKey`.** `id:` and the record id, or `pos:` and the position of the entry in the source
-  list, from 0 (contract section 5). The key compares as text. Some entries of the `pos:` types carry their own id
+  list, from 0 (contract section 5). The key sorts by its number, so `pos:2` comes before `pos:10`
+  and the `pos:` rows keep the order of the list; the `id:` rows follow the record id, which can
+  differ from the list order of today. Some entries of the `pos:` types carry their own id
   (`clinicalTrialId`, `publicationId`, `presentationId`, `ipId`, `fundingId`), which duos-ui uses as
   the row id when it is present. The key does not use them: the field is optional, so one type would
   mix both forms. The row returns the field (section 2).
@@ -93,12 +95,14 @@ today. A column with a list of values (chips) is not sortable and has no sort ke
 | `funding_resources` | `studyName`, `fundingId`, `funderName`, `funderProgram`, `grantNumber`, `projectTitle`, `startDate` |
 
 - `maintainerName` sorts by `maintainer.name`. The Maintainer column shows that name.
-- Text sorts without regard to case. Dates sort as dates. `citation` sorts `false` before `true`.
+- Text sorts by its bytes, with regard to case, as in each view (contract section 5). Dates sort as
+  dates. `citation` sorts `false` before `true`.
 - Without `sort`, and as the tie-breaker, the order is `studyId`, then `assetKey` (contract section
   5).
 - **A change from today.** The asset tables sort in the browser (`sortingMode: 'client'`), so a sort
-  orders only the rows of the current page. The server sorts every row of the result before it takes
-  the page.
+  orders only the rows of the current page, and the browser compares text without regard to case.
+  The server sorts every row of the result before it takes the page, and it compares text with
+  regard to case: "apple" now comes after "Zebra".
 
 ## 4. Filter keys
 
