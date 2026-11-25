@@ -1,0 +1,12 @@
+{
+  "example": "Q13 3.2, a study that does not exist, with Q6 B",
+  "source": "docs/plans/typed-search-examples-open-questions.md#32-a-study-that-the-user-cannot-read",
+  "user": { "roles": ["RESEARCHER"] },
+  "outcome": { "Q6": "B", "Q13": "B" },
+  "request": { "view": "studies", "scope": {"studyId": 999}, "page": {"offset": 0, "limit": 1} },
+  "response": {
+    "status": 404,
+    "body": { "message": "Not found: studyId", "code": 404 },
+    "serverCheck": "study 999 does not exist; the same status as a study the user cannot read"
+  }
+}

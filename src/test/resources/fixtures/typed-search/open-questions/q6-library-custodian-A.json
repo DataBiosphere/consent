@@ -1,0 +1,23 @@
+{
+  "example": "Q6 1.1, the library, a Researcher who is a custodian, outcome A",
+  "source": "docs/plans/typed-search-examples-open-questions.md#11-the-library",
+  "user": { "roles": ["RESEARCHER"], "relation": "data custodian of study 42, which is not public" },
+  "outcome": { "Q6": "A" },
+  "request": { "view": "studies", "scope": {"library": null}, "search": "kidney" },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "studies",
+      "total": 1,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "studyId": 44,
+          "studyName": "Kidney Function Study",
+          "datasetCount": 1,
+          "totalParticipants": 300
+        }
+      ]
+    }
+  }
+}

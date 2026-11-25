@@ -1,0 +1,16 @@
+{
+  "example": "Q12 2.2, the AI Models tab with two model filters (the same with both answers)",
+  "source": "docs/plans/typed-search-examples-open-questions.md#22-the-ai-models-tab",
+  "user": { "roles": ["RESEARCHER"] },
+  "outcome": { "Q12": "AB" },
+  "request": {
+    "view": "assets",
+    "assetType": "models",
+    "scope": { "library": null },
+    "filters": [ {"key": "modelLicense", "values": ["mit"]}, {"key": "modelFormat", "values": ["onnx"]} ]
+  },
+  "response": {
+    "status": 200,
+    "body": { "view": "assets", "total": 0, "page": {"offset": 0, "limit": 25}, "results": [] }
+  }
+}

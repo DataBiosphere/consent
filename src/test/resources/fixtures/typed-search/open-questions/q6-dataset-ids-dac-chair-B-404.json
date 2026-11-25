@@ -1,0 +1,15 @@
+{
+  "example": "Q6 1.3, dataset ids, a DAC chair who reviews the DAR, outcome B with Q13 B",
+  "source": "docs/plans/typed-search-examples-open-questions.md#13-dataset-ids",
+  "user": {
+    "roles": [ "CHAIRPERSON" ],
+    "relation": "chair of the DAC of dataset 105; no relation to study 42"
+  },
+  "outcome": { "Q6": "B", "Q13": "B" },
+  "request": { "view": "datasets", "scope": {"datasetIds": [101, 105]}, "page": {"offset": 0, "limit": 10000} },
+  "response": {
+    "status": 404,
+    "body": { "message": "Not found: datasetIds", "code": 404 },
+    "serverCheck": "the contract rule gives a DAC member or chair no access (OPEN-3)"
+  }
+}

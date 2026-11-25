@@ -1,0 +1,27 @@
+{
+  "example": "Q15 4.1, Submissions for a Data Submitter who is a custodian, outcome A",
+  "source": "docs/plans/typed-search-examples-open-questions.md#41-submissions",
+  "user": {
+    "roles": [ "DATASUBMITTER" ],
+    "relation": "data custodian of study 50; did not create it or its datasets"
+  },
+  "outcome": { "Q15": "A" },
+  "request": { "view": "studies", "scope": {"ownedByMe": true} },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "studies",
+      "total": 1,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [
+        {
+          "studyId": 51,
+          "studyName": "Skin Study",
+          "datasetCount": 1,
+          "totalParticipants": 120,
+          "dataCustodianEmail": [ "other@example.org" ]
+        }
+      ]
+    }
+  }
+}

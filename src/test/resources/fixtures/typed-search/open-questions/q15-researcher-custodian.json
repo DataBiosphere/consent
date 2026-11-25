@@ -1,0 +1,8 @@
+{
+  "example": "Q15 4.2, a Researcher who is only a custodian (403 with both outcomes)",
+  "source": "docs/plans/typed-search-examples-open-questions.md#42-who-can-use-the-scope",
+  "user": { "roles": ["RESEARCHER"], "relation": "data custodian of study 50" },
+  "outcome": { "Q15": "AB" },
+  "request": { "view": "studies", "scope": {"ownedByMe": true} },
+  "response": { "status": 403, "body": {"message": "Not permitted: ownedByMe", "code": 403} }
+}

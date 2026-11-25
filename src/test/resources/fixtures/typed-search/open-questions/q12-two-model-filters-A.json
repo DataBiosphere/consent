@@ -1,0 +1,20 @@
+{
+  "example": "Q12 2.1, two model filters on two models of study 7, outcome A",
+  "source": "docs/plans/typed-search-examples-open-questions.md#21-studies-tab-with-two-model-filters",
+  "user": { "roles": ["RESEARCHER"] },
+  "outcome": { "Q12": "A" },
+  "request": {
+    "view": "studies",
+    "scope": { "library": null },
+    "filters": [ {"key": "modelLicense", "values": ["mit"]}, {"key": "modelFormat", "values": ["onnx"]} ]
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "studies",
+      "total": 1,
+      "page": { "offset": 0, "limit": 25 },
+      "results": [ {"studyId": 7, "studyName": "Heart Study", "datasetCount": 3, "totalParticipants": 4200} ]
+    }
+  }
+}
