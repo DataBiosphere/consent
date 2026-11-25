@@ -254,7 +254,7 @@ public class DataAccessRequestService implements ConsentLogger {
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
     boolean requiresSOApproval = requiresSOApproval(user, datasetIds);
     List<RemovedDocument> removedDocuments = new ArrayList<>();
-    String referenceId =
+    DataAccessRequest submitted =
         dataAccessRequestServiceDAO.inTransaction(
             transactionDAOs -> {
               DataAccessRequestDAO transactionalDarDAO = transactionDAOs.dataAccessRequestDAO();
@@ -326,13 +326,34 @@ public class DataAccessRequestService implements ConsentLogger {
               if (requiresSOApproval) {
                 transactionalDarDAO.updateRequiresSOApproval(true, transactionReferenceId);
               }
-              return transactionReferenceId;
+              // Read before the commit: once the DAR is submitted, nothing may turn the request
+              // into an error, or the researcher would submit it again.
+              DataAccessRequest saved =
+                  transactionalDarDAO.findByReferenceId(transactionReferenceId);
+              if (saved == null) {
+                throw new NotFoundException("No data access request found for this reference Id");
+              }
+              return saved;
             });
+    String referenceId = submitted.getReferenceId();
     deleteRemovedDocuments(referenceId, user.getUserId(), removedDocuments);
     if (!requiresSOApproval) {
-      ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
+      triggerDACRulesAfterCommit(user, datasetIds, referenceId, request);
     }
-    return findByReferenceId(referenceId);
+    return submitted;
+  }
+
+  /**
+   * Runs the DAC automation rules for a committed request. The request already exists, so a failure
+   * is logged rather than returned; nothing retries it.
+   */
+  private void triggerDACRulesAfterCommit(
+      User user, List<Integer> datasetIds, String referenceId, ContainerRequest request) {
+    try {
+      ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
+    } catch (Exception e) {
+      logException("Unable to run the DAC rules for " + referenceId, e);
+    }
   }
 
   /** Whether a DAR or a file storage object refers to the file at this bucket location. */

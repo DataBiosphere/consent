@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -16,6 +17,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -84,6 +86,7 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO.DocumentSave;
+import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -178,6 +181,69 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try (var response = resource.createDataAccessRequest(duosUserWithCards, request, info, "")) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
     }
+  }
+
+  // The DAR is submitted once createDataAccessRequest returns: a failure in a later step must not
+  // answer an error, or the researcher would submit it again.
+  @Test
+  void testCreateDataAccessRequestIsCreatedWhenMatchingFails() {
+    DataAccessRequest dar = mockSubmittedDar();
+    doThrow(new RuntimeException("matching failed"))
+        .when(matchService)
+        .reprocessMatchesForPurpose(dar.getReferenceId());
+    when(datasetService.findDatasetsByIds(any(), any())).thenReturn(List.of());
+
+    assertDarCreated(dar);
+    verify(datasetService).findDatasetsByIds(any(), any());
+  }
+
+  @Test
+  void testCreateDataAccessRequestIsCreatedWhenTheDatasetLookupFails() {
+    DataAccessRequest dar = mockSubmittedDar();
+    when(datasetService.findDatasetsByIds(any(), any()))
+        .thenThrow(new RuntimeException("lookup failed"));
+
+    assertDarCreated(dar);
+  }
+
+  @Test
+  void testCreateDataAccessRequestIsCreatedWhenTheComplianceLogFails() {
+    DataAccessRequest dar = mockSubmittedDar();
+    when(datasetService.findDatasetsByIds(any(), any())).thenReturn(List.of());
+    try (var complianceLogger = mockStatic(ComplianceLogger.class)) {
+      complianceLogger
+          .when(() -> ComplianceLogger.logDARSubmission(any(), any(), any(), anyInt()))
+          .thenThrow(new RuntimeException("log failed"));
+
+      assertDarCreated(dar);
+      complianceLogger.verify(
+          () -> ComplianceLogger.logDARSubmission(any(), any(), any(), anyInt()));
+    }
+  }
+
+  private DataAccessRequest mockSubmittedDar() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setCollectionId(1);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setReferenceId(dar.getReferenceId());
+    dar.setData(data);
+    when(dataAccessRequestService.createDataAccessRequest(any(), any(), any())).thenReturn(dar);
+    when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
+    when(info.getRequestUriBuilder()).thenReturn(builder);
+    return dar;
+  }
+
+  private void assertDarCreated(DataAccessRequest dar) {
+    User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+    userWithCards.setLibraryCard(new LibraryCard());
+    try (var response =
+        resource.createDataAccessRequest(
+            new DuosUser(authUser, userWithCards), request, info, "")) {
+      assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+      assertEquals(dar.getReferenceId(), ((Map<?, ?>) response.getEntity()).get("referenceId"));
+    }
+    verify(matchService).reprocessMatchesForPurpose(dar.getReferenceId());
   }
 
   @Test

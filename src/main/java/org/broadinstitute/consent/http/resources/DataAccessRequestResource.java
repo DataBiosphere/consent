@@ -133,13 +133,37 @@ public class DataAccessRequestResource extends Resource {
               user, payload, (ContainerRequest) request);
       processNewDarCollection(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
-      matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
-      List<Dataset> datasets = datasetService.findDatasetsByIds(user, newDar.getDatasetIds());
-      ComplianceLogger.logDARSubmission(
-          user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
+      reprocessMatchesAfterSubmit(newDar.getReferenceId());
+      logDarSubmission(user, newDar, (ContainerRequest) request);
       return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  /**
+   * Matches a submitted DAR against its datasets. The DAR already exists, so a failure is logged
+   * rather than returned; an admin can rerun it (POST /api/match/reprocess/purpose/{purposeId}).
+   */
+  private void reprocessMatchesAfterSubmit(String referenceId) {
+    try {
+      matchService.reprocessMatchesForPurpose(referenceId);
+    } catch (Exception e) {
+      logException("Unable to reprocess matches for " + referenceId, e);
+    }
+  }
+
+  /**
+   * Logs a submitted DAR for compliance. The DAR already exists, so a failure is logged rather than
+   * returned: an error would make the researcher submit it again.
+   */
+  private void logDarSubmission(User user, DataAccessRequest dar, ContainerRequest request) {
+    try {
+      List<Dataset> datasets = datasetService.findDatasetsByIds(user, dar.getDatasetIds());
+      ComplianceLogger.logDARSubmission(
+          user, datasets, request, HttpStatusCodes.STATUS_CODE_CREATED);
+    } catch (Exception e) {
+      logException("Unable to log the submission of " + dar.getReferenceId(), e);
     }
   }
 
