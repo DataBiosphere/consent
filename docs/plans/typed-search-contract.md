@@ -108,7 +108,7 @@ cannot remove them, and the request has no field for them.
 | Library | `{ "library": "<key>" }`, or `{ "library": null }` for the full library | Each signed-in user | The key must be in the server list of branded libraries. The "my institution" library uses the institution from the session. For a user with no institution it returns no rows, as today (duos-ui sends institution id 0). |
 | Owned by the user | `{ "ownedByMe": true }`. With the `assets` view, for the asset tabs of the Submissions page. | Data Submitter, Chairperson, Admin | None. The user id and email come from the session. A dataset is owned if the user created it, submitted its study, or is a data custodian of its study: the email of the user equals one of the custodian emails (Q15). |
 | DAC | `{ "dacIds": [1, 2] }` | Chairperson and Member for their DACs, Admin for each DAC | Each DAC id must be a DAC of the user. Otherwise 404. An Admin sees each DAC: an id that does not exist adds no rows. |
-| One study | `{ "studyId": 42 }` | Each signed-in user | The study must be visible to the user (below). Otherwise 404. In the `datasets` view, a user who sees only some datasets of the study (the dataset creator grant) gets those rows, and 404 only if they see none. |
+| One study | `{ "studyId": 42 }` | Each signed-in user | The study must be visible to the user (below). Otherwise 404. In the `datasets` view, a user whose only grant on a hidden study is the dataset creator grant gets the datasets they created instead of 404. A visible study without datasets returns no rows. |
 | Dataset ids | `{ "datasetIds": [10, 11] }` | Each signed-in user | Each dataset must be visible to the user (below). Otherwise the whole request gets 404. |
 | Dataset identifiers | `{ "datasetIdentifiers": ["DUOS-000123"] }` | As dataset ids | As dataset ids. For the dataset page, which looks a dataset up by its identifier (`DatasetStatistics.tsx`). An identifier matches the full identifier without regard to case, as the ES `match_phrase` does today. |
 
@@ -131,9 +131,10 @@ datasets, and its assets are visible to a user who:
 A dataset without a study stays visible to each user, as `DatasetService.readBasis` has it today.
 The rule applies to the library, the study scope, the two dataset scopes, the `assets` view, and
 the `counts` view. The DAC scope keeps its own rule, and the owned-by-the-user scope is exempt, as
-today. An Admin sees everything. For any other user, a target that the user cannot see gets 404,
-the same status and body as a target that does not exist (Q13), so a hidden study cannot be told
-from a missing one. duos-ui shows a 404 on the dataset page as an error today; DT-4512 maps it to
+today. An Admin sees everything: a DAC id that does not exist adds no rows for an Admin, and a
+study or dataset id that does not exist still gets 404. For any other user, a target that the user
+cannot see gets 404, the same status and body as a target that does not exist (Q13), so a hidden
+study cannot be told from a missing one. duos-ui shows a 404 on the dataset page as an error today; DT-4512 maps it to
 "not found". The decisions are in DT-3848 (comment of 2026-11-25) and
 [`typed-search-examples-open-questions.md`](typed-search-examples-open-questions.md).
 
@@ -328,7 +329,7 @@ The errors that the endpoint returns use the existing consent error body:
 | 401 | The caller is not signed in. The consent authentication filter answers before the endpoint, with a plain text body, not the JSON body. |
 | 403 | The user cannot use the requested scope (design section 7.4a). The server returns 403, not an empty result. |
 | 429 | The consent rate limit for `/api/` (`RateLimitFilter`). The response has a `Retry-After` header and no body. |
-| 404 | A target id of the scope (a DAC, a study, a dataset) that the user cannot read or that does not exist, with the same body for both (Q13). Not for an Admin, who sees each target. |
+| 404 | A target id of the scope (a DAC, a study, a dataset) that the user cannot read or that does not exist, with the same body for both (Q13). An Admin can read each target, so an Admin gets 404 only for a study or dataset that does not exist; a DAC id that does not exist adds no rows for an Admin. |
 | 413 | The body is larger than 1,048,576 bytes. |
 | 504 | The queries of the request took more than 30 seconds. |
 | 500 | Any other server failure. The body has a fixed message, `Search failed`. |
