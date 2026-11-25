@@ -61,22 +61,25 @@ The server adds these rules to each `datasets` query. The caller cannot remove t
 
 | Scope | Public visibility rule | Approved rule | Has a study | Callers |
 | --- | --- | --- | --- | --- |
-| `library` | Yes, for a user without a privileged role | Yes | Yes | Data Library, Datasets tab |
+| `library` | Yes | Yes | Yes | Data Library, Datasets tab |
 | `ownedByMe` | No: every role that can use the scope is exempt | No | Yes | Submissions, Datasets tab |
 | `dacIds` | No | No | No | DAC Datasets, Manage DAC, DAC profile |
-| `studyId` | No | No | Yes (by the scope) | Study page |
-| `datasetIds`, `datasetIdentifiers` | No | No | No | DAR review, DUC addendum, dataset page |
+| `studyId` | Yes, with the DAC Member grant; the user gets the datasets they can see, and 404 if none | No | Yes (by the scope) | Study page |
+| `datasetIds`, `datasetIdentifiers` | Yes, with the DAC Member and submitted DAR grants; a hidden dataset gets 404 | No | No | DAR review, DUC addendum, dataset page |
 
-- **Public visibility rule:** the study has `publicVisibility = true`, unless the user is a
-  Chairperson, Data Submitter, Admin, or Signing Official (design section 7.4). The design gives
-  the Submissions page "same as the Data Library"; the page does not send the rule today, and each
-  role that can use `ownedByMe` is exempt, so the result is the same.
+- **Public visibility rule:** the study has `publicVisibility = true`, or the user has one of the
+  grants of contract section 3 (Q6): the Chairperson, Data Submitter, Admin, or Signing Official
+  role; membership of the DAC of the dataset, in the study scope and the two dataset scopes; the
+  creator or a custodian of the study; the creator of the dataset; a submitted DAR of the user
+  that has the dataset, in the two dataset scopes. A dataset
+  without a study has no study visibility and stays visible, as today. The study page and the two
+  dataset scopes have no visibility rule today, so this is a change for a Researcher (Q6). The
+  design gives the Submissions page "same as the Data Library"; the page does not send the rule
+  today, and each role that can use `ownedByMe` is exempt, so the result is the same.
 - **Approved rule:** a controlled dataset appears only with `dacApproval = true`
   (`APPROVED_CONTROLLED_SHOULD` in `datasetAsset.ts`).
 - **Has a study:** every Data Library, Submissions, and study page query sends `exists: study`
   today (`useLibraryData.ts`, `useStudyDetailsData.ts`, design section 4.2). The v1 callers do not.
-- Q6 can change the rules of the `studyId`, `datasetIds`, and `datasetIdentifiers` scopes (slice
-  4).
 
 ## 4. Projections
 
