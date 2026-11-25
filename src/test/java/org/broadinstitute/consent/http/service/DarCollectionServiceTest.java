@@ -756,11 +756,36 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(submitted);
     collection.addDar(draft);
+    when(datasetDAO.findDatasetIdsByDacIds(List.of(1))).thenReturn(List.of(10));
 
-    // 409, not the NullPointerException getMostRecentDar throws on a draft.
+    ConsentConflictException e =
+        assertThrows(
+            ConsentConflictException.class,
+            () -> service.createElectionsForDarCollection(chair, collection));
+    assertEquals("Cannot open elections on a collection that has a draft.", e.getMessage());
+    verify(dataAccessRequestDAO, never()).lockCollection(any());
+    verify(darCollectionServiceDAO, never()).createElectionsForDarByUser(any(), any());
+  }
+
+  // A chair of another DAC gets 403, not the 409 that would tell them the collection holds a draft.
+  @Test
+  void electionCreationRejectsAnotherDacsChairBeforeTheDraftCheck() {
+    User chair = new User();
+    chair.setChairpersonRoleWithDAC(1);
+    DataAccessRequest submitted = new DataAccessRequest();
+    submitted.setReferenceId(UUID.randomUUID().toString());
+    submitted.setDatasetIds(List.of(10));
+    submitted.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
+    DataAccessRequest draft = new DataAccessRequest();
+    draft.setReferenceId(UUID.randomUUID().toString());
+    draft.setDatasetIds(List.of(10));
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(submitted);
+    collection.addDar(draft);
+    when(datasetDAO.findDatasetIdsByDacIds(List.of(1))).thenReturn(List.of(20));
+
     assertThrows(
-        ConsentConflictException.class,
-        () -> service.createElectionsForDarCollection(chair, collection));
+        ForbiddenException.class, () -> service.createElectionsForDarCollection(chair, collection));
     verify(dataAccessRequestDAO, never()).lockCollection(any());
     verify(darCollectionServiceDAO, never()).createElectionsForDarByUser(any(), any());
   }
@@ -835,7 +860,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForDarCollectionWithoutDatasetsIsBadRequest() {
+  void testCreateElectionsForDarCollectionWithoutDatasetsIsForbidden() {
     User user = new User();
     user.setUserId(1);
     user.setChairpersonRole();
@@ -847,7 +872,24 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     collection.addDar(dar);
 
     assertThrows(
-        BadRequestException.class, () -> service.createElectionsForDarCollection(user, collection));
+        ForbiddenException.class, () -> service.createElectionsForDarCollection(user, collection));
+    verifyNoInteractions(darCollectionServiceDAO);
+  }
+
+  // A draft-only collection whose draft lost its datasets: another chair learns nothing about it.
+  @Test
+  void electionCreationOnADraftWithoutDatasetsIsForbidden() {
+    User chair = new User();
+    chair.setChairpersonRoleWithDAC(1);
+    DataAccessRequest draft = new DataAccessRequest();
+    draft.setReferenceId(UUID.randomUUID().toString());
+    draft.setDatasetIds(List.of());
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(draft);
+    when(datasetDAO.findDatasetIdsByDacIds(List.of(1))).thenReturn(List.of(10));
+
+    assertThrows(
+        ForbiddenException.class, () -> service.createElectionsForDarCollection(chair, collection));
     verifyNoInteractions(darCollectionServiceDAO);
   }
 
@@ -1150,19 +1192,84 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     signingOfficial.setRoles(List.of(UserRoles.SigningOfficial()));
     signingOfficial.setEmail("email2");
     signingOfficial.setUserId(2);
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setSigningOfficialEmail(signingOfficial.getEmail());
     DataAccessRequest submitted = new DataAccessRequest();
     submitted.setReferenceId(UUID.randomUUID().toString());
     submitted.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
     submitted.setRequiresSOApproval(true);
+    submitted.setData(darData);
     DataAccessRequest draft = new DataAccessRequest();
     draft.setReferenceId(UUID.randomUUID().toString());
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(submitted);
     collection.addDar(draft);
 
-    // 409, not the NullPointerException getMostRecentDar throws on a draft.
+    ConsentConflictException e =
+        assertThrows(
+            ConsentConflictException.class,
+            () -> service.approveDarCollection(signingOfficial, collection, request, null));
+    assertEquals("A collection that has a draft cannot be approved.", e.getMessage());
+    verify(dataAccessRequestDAO, never()).lockCollection(any());
+  }
+
+  // Someone else's signing official gets 403, not the 409 that would tell them about the draft.
+  @Test
+  void testApproveCollectionWithADraftRejectsAnotherSigningOfficialFirst() {
+    User otherOfficial = new User();
+    otherOfficial.setRoles(List.of(UserRoles.SigningOfficial()));
+    otherOfficial.setEmail("other@example.com");
+    otherOfficial.setUserId(3);
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setSigningOfficialEmail("so@example.com");
+    DataAccessRequest submitted = new DataAccessRequest();
+    submitted.setReferenceId(UUID.randomUUID().toString());
+    submitted.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
+    submitted.setRequiresSOApproval(true);
+    submitted.setData(darData);
+    DataAccessRequest draft = new DataAccessRequest();
+    draft.setReferenceId(UUID.randomUUID().toString());
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(submitted);
+    collection.addDar(draft);
+
     assertThrows(
-        ConsentConflictException.class,
+        ForbiddenException.class,
+        () -> service.approveDarCollection(otherOfficial, collection, request, null));
+    verify(dataAccessRequestDAO, never()).lockCollection(any());
+  }
+
+  // Someone else's signing official gets 403, not the 400 that would tell them it was approved.
+  @Test
+  void testApproveCollectionAlreadyApprovedRejectsAnotherSigningOfficialFirst() {
+    User otherOfficial = new User();
+    otherOfficial.setRoles(List.of(UserRoles.SigningOfficial()));
+    otherOfficial.setEmail("other@example.com");
+    otherOfficial.setUserId(3);
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setSigningOfficialEmail("so@example.com");
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
+    dar.setRequiresSOApproval(true);
+    dar.setApprovingSigningOfficialUserId(2);
+    dar.setData(darData);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.approveDarCollection(otherOfficial, collection, request, null));
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  @Test
+  void testApproveCollectionWithNoDarIsNotFound() {
+    DarCollection collection = new DarCollection();
+    User signingOfficial = approvingOfficial();
+
+    assertThrows(
+        NotFoundException.class,
         () -> service.approveDarCollection(signingOfficial, collection, request, null));
     verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
@@ -1574,7 +1681,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setApprovingSigningOfficialUserId(signingOfficial.getUserId());
     dar.setApprovingSigningOfficialApprovedDate(Timestamp.from(Instant.now()));
     DataAccessRequestData darData = new DataAccessRequestData();
-    darData.setSigningOfficialEmail("notTheSigningOfficialMakingRequest");
+    darData.setSigningOfficialEmail(signingOfficial.getEmail());
     dar.setData(darData);
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);

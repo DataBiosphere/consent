@@ -20,11 +20,14 @@ post:
           schema:
             $ref: '../schemas/DarCollection.yaml'
     400:
-      description: Bad Request (collection has no DAR, or the DAR has no datasets)
+      description: Bad Request (collection has no DAR)
     401:
       description: Authentication required.
     403:
-      description: Forbidden. Not a Chairperson for any dataset in the collection.
+      description: >-
+        Forbidden. Not a Chairperson for any dataset in the collection's most recent DAR, or that
+        DAR has no datasets. Checked before the draft check, so a 409 for a draft goes only to a
+        Chairperson who governs the collection.
     404:
       description: Not Found
     409:

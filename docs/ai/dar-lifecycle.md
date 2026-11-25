@@ -96,8 +96,9 @@ failure to record is logged and doesn't fail the request.
 - Elections are per (DAR reference id, dataset). A chair opens them
   (`DarCollectionService.createElectionsForDarCollection`), or auto-open DACs and DAC automation
   rules open them (`createElectionsForNewDarCollection`, `DACAutomationRuleService`). None of
-  them opens elections on a draft: the chair gets 409 when any DAR in the collection is a draft,
-  and every path re-checks under the collection lock that its DAR is still submitted with the
+  them opens elections on a draft: a chair who governs a dataset of the most recent DAR gets 409
+  when any DAR in the collection is a draft (any other chair gets 403 first, so the draft isn't
+  revealed), and every path re-checks under the collection lock that its DAR is still submitted with the
   date it read (`DataAccessRequestDAO.isSubmittedAt`, compared to the millisecond because
   progress reports store microseconds and Java copies keep milliseconds). The automated paths
   skip a DAR that fails the check, and new-DAR processing (elections and new-request emails)
@@ -121,6 +122,8 @@ failure to record is logged and doesn't fail the request.
   any left from older data, resets `requires_so_approval` to NULL and sets it again when needed;
   and a signing official can't approve a draft, a collection that has one, a canceled DAR, or a
   DAR whose submission date changed while the approval waited for the collection lock (409).
+  Anyone who isn't the DAR's signing official gets 403 before any of those checks (only a DAR
+  with no form data, which current paths can't save, gets its 409 first).
   A collection approval names the submission the official reviewed (`SubmissionApproval`: the
   latest DAR's reference id and submission date); a different submission under the collection
   lock is a 409. A closeout approval names its DAR in the path, so its body needs only the

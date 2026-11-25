@@ -33,8 +33,12 @@ post:
         referenceId and submissionDate is rejected.
     401:
       description: Not authorized to perform this action.
+    403:
+      description: >-
+        Forbidden. The user is not the Signing Official named on the collection's most recent DAR.
+        Checked before the draft and approval-state checks.
     404:
-      description: Not Found
+      description: Not Found. The collection does not exist or has no DAR.
     409:
       description: >-
         Conflict. The collection does not require approval, has a submitted closeout, or holds a
