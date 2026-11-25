@@ -72,7 +72,8 @@ total is exact.
 ## 3. The dashboards count differently
 
 The Researcher, DAC, and Signing Official dashboards keep their own server endpoints (contract
-section 3), and their numbers do not change. They differ from the badges:
+section 3), and their numbers do not change, except the Data Submissions total, which counts the
+studies of a data custodian once the ownership rule is corrected (Q15). They differ from the badges:
 
 | Dashboard total (`DashboardSearchService`) | Difference from the `counts` view |
 | --- | --- |
