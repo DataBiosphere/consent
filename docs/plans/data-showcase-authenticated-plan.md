@@ -36,7 +36,8 @@ per-user features possible, such as access state on dataset cards; none is in th
 - **duos-ui:** the showcase routes go inside `Authenticated`, and the catalog client calls the new
   route as the signed-in user.
 
-The anonymous route, its rate limit and its CORS and proxy settings stay in the code, switched off.
+The anonymous route and its CORS and proxy settings stay in the code, switched off.
+`PublicRateLimitFilter` stays registered and keeps limiting `showcase/*` by IP.
 
 ## Decisions
 
@@ -112,7 +113,7 @@ Choosing "sign in to see more" changes Task 2 only.
 | --- | --- | --- |
 | 1. Authenticated lookup route | consent | — |
 | 2. Showcase routes behind sign-in and the authenticated client | duos-ui | 1 |
-| 3. Layout-only previews outside production | duos-ui, consent docs | 2, 4 |
+| 3. Preview procedure and handoff cleanup | duos-ui, consent docs | 2, 4 |
 | 4. Health check on the authenticated route | consent, duos-ui | 1, duos-ui #4164 |
 
 ## Tasks
@@ -133,22 +134,23 @@ Choosing "sign in to see more" changes Task 2 only.
   controlled dataset, 401 without a user, 403 for a user without the roles, and the per-user rate
   limit.
 - Before launch, check in terra-helmfile that `rateLimit.enabled` is on and
-  `showcasePublicLookupEnabled` is off in each environment, so the anonymous route stays
-  unregistered.
+  `showcasePublicLookupEnabled` is off in each environment. That chart value (DT-4411) sets
+  Consent's `showcase.publicLookupEnabled`, so the anonymous route stays unregistered.
 
 ### Task 2: Showcase routes behind sign-in and the authenticated client (duos-ui)
 
 - Move `/data` and `/showcase/:key` inside `Authenticated` in `AppRoutes.tsx`.
 - `ShowcaseCatalog.ts` calls `/api/showcase/datasets` through `fetchAdapter` with
   `Config.authOpts()`, and the new option for 400 and 429.
+- In the same change, so no environment ever resolves production identifiers against its own
+  Consent: on local, dev and staging, render `registry.json` entries without catalog lookups and
+  with dataset handoffs off; keep both for the end-to-end fixture entries.
 - Remove the "Sign-in required" handoff labels, which no longer apply.
-- Playwright: a signed-out visit redirects to sign-in and back; a signed-in visit shows cards. BFF
-  and legacy.
+- Playwright: a signed-out visit redirects to sign-in and back; a signed-in visit shows cards; a
+  registry entry outside production makes no lookup. BFF and legacy.
 
-### Task 3: Layout-only previews outside production (duos-ui)
+### Task 3: Preview procedure and handoff cleanup (duos-ui)
 
-- On local, dev and staging, render `registry.json` entries without catalog lookups and with dataset
-  handoffs off; keep both for the end-to-end fixture entries.
 - Remove `showcaseHandoffsEnabled` from the BFF (`server/src/config.ts`) and the client
   (`src/libs/config.ts`), and the production-data preview notice.
 - No one sees a pending showcase with live cards before it goes live. A reviewer checks its
@@ -166,7 +168,8 @@ anonymous lookup; this task moves it to the authenticated route.
 - Point it at `/api/showcase/datasets` with a dedicated DUOS user that has only the Researcher
   role. A shared service account would also open the endpoints its role allows.
 - Give the credential only to the scheduled and manual runs on `develop`, through Workload Identity
-  Federation or an environment-scoped secret. Pull-request runs execute the PR's own script, so they
+  Federation or an environment-scoped secret, and send it only to production Consent over HTTPS. A
+  manual run given another `lookup_url` runs without it. Pull-request runs execute the PR's own script, so they
   run without it: they check links only, and a showcase PR's identifiers are checked by the
   reviewer's local run (Task 3) and then by the daily run.
 - DT-4359 is then no longer blocked by DT-4466.
