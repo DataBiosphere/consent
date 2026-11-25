@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
+import org.broadinstitute.consent.http.filters.UploadSizeLimited;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -337,6 +338,7 @@ public class DataAccessRequestResource extends Resource {
   }
 
   @POST
+  @UploadSizeLimited
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/v2/{referenceId}/irbDocument")
@@ -383,6 +385,7 @@ public class DataAccessRequestResource extends Resource {
   }
 
   @POST
+  @UploadSizeLimited
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/v2/progress_report/{parentReferenceId}")
@@ -661,6 +664,7 @@ public class DataAccessRequestResource extends Resource {
   }
 
   @POST
+  @UploadSizeLimited
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/v2/{referenceId}/collaborationDocument")

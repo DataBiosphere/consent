@@ -128,9 +128,9 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
     verify(gcsService).deleteDocument(anyString());
   }
 
-  // A file over the upload limit is the client's error: a 400, not a storage failure.
+  // A file over the upload limit is the client's error: a 413, not a storage failure.
   @Test
-  void testAFileOverTheLimitIsABadRequest() throws IOException {
+  void testAFileOverTheLimitIsRefusedAsTooLarge() throws IOException {
     User user = createUser();
     Map<String, FormDataBodyPart> testFiles = new LinkedHashMap<>(getRandomFiles(1));
     FormDataBodyPart large = mock(FormDataBodyPart.class);

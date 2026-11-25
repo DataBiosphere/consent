@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.filters.UploadSizeLimited;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Study;
@@ -306,6 +307,7 @@ public class StudyResource extends Resource {
   }
 
   @PUT
+  @UploadSizeLimited
   @Consumes({MediaType.MULTIPART_FORM_DATA})
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/{studyId}")

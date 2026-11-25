@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
+import org.broadinstitute.consent.http.filters.UploadSizeLimited;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetPatch;
@@ -97,6 +98,7 @@ public class DatasetResource extends Resource {
   }
 
   @POST
+  @UploadSizeLimited
   @Consumes({MediaType.MULTIPART_FORM_DATA})
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/v3")
@@ -162,6 +164,7 @@ public class DatasetResource extends Resource {
 
   /** This endpoint updates the dataset. */
   @PUT
+  @UploadSizeLimited
   @Consumes({MediaType.MULTIPART_FORM_DATA})
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/v3/{datasetId}")
