@@ -145,9 +145,10 @@ scope.
 - In the `assets` view, the row filters of the requested type apply to the asset row, so they all
   must match the same asset. The study filters narrow the studies (section 2).
 - The registry gives each text key its match: "one of" (equal to one of the values) or "contains"
-  (contains one of the values, without regard to case). The row filter keys of models, workspaces,
-  biospecimens, and clinical trials use "contains", as the browser does today (`includesIgnoreCase`
-  in the asset definitions).
+  (contains one of the values, without regard to case). Each asset row filter key keeps the match
+  of the browser check of today: "contains" where the asset definition uses `includesIgnoreCase`,
+  and "one of" where it compares with `includes` (for example the clinical trial status and the
+  biospecimen type). The asset registry (slice 3) lists the match of each key.
 
 ## 5. Sort and page
 
