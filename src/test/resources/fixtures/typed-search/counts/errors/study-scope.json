@@ -1,0 +1,7 @@
+{
+  "example": "counts error: study scope",
+  "source": "docs/plans/typed-search-counts.md#44-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "counts", "scope": {"studyId": 42} },
+  "response": { "status": 400, "body": {"message": "Scope not accepted by view counts: studyId", "code": 400} }
+}

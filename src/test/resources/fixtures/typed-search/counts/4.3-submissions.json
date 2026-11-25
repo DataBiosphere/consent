@@ -1,0 +1,24 @@
+{
+  "example": "counts 4.3, Submissions",
+  "source": "docs/plans/typed-search-counts.md#43-submissions",
+  "user": { "roles": ["DATASUBMITTER"] },
+  "request": { "view": "counts", "scope": {"ownedByMe": true}, "search": "kidney" },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "counts",
+      "totals": {
+        "studies": 2,
+        "datasets": 6,
+        "models": 0,
+        "workspaces": 1,
+        "clinical_trials": 0,
+        "biospecimens": 12,
+        "publications": 1,
+        "presentations": 0,
+        "intellectual_properties": 0,
+        "funding_resources": 0
+      }
+    }
+  }
+}

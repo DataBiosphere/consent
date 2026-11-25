@@ -1,0 +1,36 @@
+{
+  "view": "studies",
+  "source": "docs/plans/typed-search-studies.md",
+  "requestFields": ["view", "scope", "search", "filters", "facets", "sort", "page", "projection"],
+  "scopes": {
+    "library": [],
+    "ownedByMe": ["DATASUBMITTER", "CHAIRPERSON", "ADMIN"],
+    "studyId": []
+  },
+  "facets": ["accessManagement", "dataUse", "dataUseModifiers", "dataType", "dac"],
+  "sorts": [
+    "studyName", "totalParticipants", "datasetCount", "phenotype", "species", "piName",
+    "dataCustodianEmail"
+  ],
+  "projections": {
+    "library": [
+      "studyId", "studyName", "studyDescription", "piName", "species", "phenotype", "dataTypes",
+      "dataUseCodes", "accessTypes", "datasetCount", "totalParticipants", "datasetIds",
+      "modelCount", "workspaceCount"
+    ],
+    "submission": [
+      "studyId", "studyName", "studyDescription", "piName", "species", "phenotype", "dataTypes",
+      "dataUseCodes", "accessTypes", "datasetCount", "totalParticipants", "datasetIds",
+      "modelCount", "workspaceCount", "dataCustodianEmail"
+    ],
+    "header": [
+      "studyId", "studyName", "description", "dataTypes", "piName", "phenotype", "species",
+      "dataCustodianEmail", "datasetCount", "totalParticipants"
+    ]
+  },
+  "scopeProjections": {
+    "library": { "permitted": ["library"], "default": "library" },
+    "ownedByMe": { "permitted": ["library", "submission"], "default": "submission" },
+    "studyId": { "permitted": ["header"], "default": "header" }
+  }
+}

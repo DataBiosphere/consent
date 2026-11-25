@@ -1,0 +1,28 @@
+{
+  "example": "studies 6.3, study page header",
+  "source": "docs/plans/typed-search-studies.md#63-study-page-header",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "studies", "scope": {"studyId": 42}, "page": {"offset": 0, "limit": 1} },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "studies",
+      "total": 1,
+      "page": { "offset": 0, "limit": 1 },
+      "results": [
+        {
+          "studyId": 42,
+          "studyName": "Kidney Study",
+          "description": "A study of kidney function.",
+          "dataTypes": [ "WES" ],
+          "piName": "Example PI",
+          "phenotype": "Chronic kidney disease",
+          "species": "Human",
+          "dataCustodianEmail": [ "custodian@example.org" ],
+          "datasetCount": 12,
+          "totalParticipants": 9800
+        }
+      ]
+    }
+  }
+}

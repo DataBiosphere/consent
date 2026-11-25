@@ -1,0 +1,10 @@
+{
+  "example": "studies error: header with library scope",
+  "source": "docs/plans/typed-search-studies.md#64-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "studies", "scope": {"library": null}, "projection": "header" },
+  "response": {
+    "status": 400,
+    "body": { "message": "Projection not permitted for scope library: header", "code": 400 }
+  }
+}

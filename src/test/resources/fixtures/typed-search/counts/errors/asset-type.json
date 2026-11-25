@@ -1,0 +1,10 @@
+{
+  "example": "counts error: asset type",
+  "source": "docs/plans/typed-search-counts.md#44-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "counts", "scope": {"library": null}, "assetType": "models" },
+  "response": {
+    "status": 400,
+    "body": { "message": "Field not accepted by view counts: assetType", "code": 400 }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "example": "studies 6.3, a study without datasets",
+  "source": "docs/plans/typed-search-studies.md#63-study-page-header",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "studies", "scope": {"studyId": 43}, "page": {"offset": 0, "limit": 1} },
+  "response": {
+    "status": 200,
+    "body": { "view": "studies", "total": 0, "page": {"offset": 0, "limit": 1}, "results": [] }
+  }
+}

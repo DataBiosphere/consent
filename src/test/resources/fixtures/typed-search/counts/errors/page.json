@@ -1,0 +1,7 @@
+{
+  "example": "counts error: page",
+  "source": "docs/plans/typed-search-counts.md#44-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "counts", "scope": {"library": null}, "page": {"offset": 0, "limit": 0} },
+  "response": { "status": 400, "body": {"message": "Field not accepted by view counts: page", "code": 400} }
+}

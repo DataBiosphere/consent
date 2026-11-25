@@ -1,0 +1,7 @@
+{
+  "example": "studies error: dac scope",
+  "source": "docs/plans/typed-search-studies.md#64-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "studies", "scope": {"dacIds": [3]} },
+  "response": { "status": 400, "body": {"message": "Scope not accepted by view studies: dacIds", "code": 400} }
+}
