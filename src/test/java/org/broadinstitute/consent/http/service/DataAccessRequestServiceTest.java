@@ -1067,6 +1067,46 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         () -> service.findDatasetDaaSnapshotsByReferenceId(dar.getReferenceId()));
   }
 
+  // A cancel that committed after the resource loaded the parent is caught under the lock, for a
+  // closeout as for a renewal.
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void createProgressReportRejectsParentCanceledBeforeTheLock(boolean closeoutReport) {
+    mockTransactionalDaos();
+    User user = createUserWithPrerequisites();
+    User signingOfficial = createUserWithPrerequisites();
+    signingOfficial.setInstitutionId(user.getInstitutionId());
+    signingOfficial.setSigningOfficialRole();
+    DataAccessRequest parent = generateDataAccessRequest();
+    parent.setSubmissionDate(FIXED_TIMESTAMP);
+    parent.setUserId(user.getUserId());
+    parent.setDatasetIds(List.of(3));
+    DataAccessRequest report = generateProgressReport();
+    report.setParentId(parent.getId());
+    report.setCollectionId(parent.getCollectionId());
+    if (closeoutReport) {
+      report.setDatasetIds(List.of(3));
+      report.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", 2));
+    } else {
+      parent.setDatasetIds(report.getDatasetIds());
+      mockApprovedDatasets(report.getDatasetIds());
+    }
+    lenient().when(userService.findUserById(2)).thenReturn(signingOfficial);
+    lenient()
+        .when(dataAccessRequestDAO.findDatasetIdsByCollectionId(parent.getCollectionId()))
+        .thenReturn(List.of(3));
+    when(dataAccessRequestDAO.isCanceled(parent.getReferenceId())).thenReturn(true);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.createProgressReport(user, report, parent, request));
+    InOrder order = inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).lockCollection(parent.getCollectionId());
+    order.verify(dataAccessRequestDAO).isCanceled(parent.getReferenceId());
+    verify(dataAccessRequestDAO, never())
+        .insertProgressReport(any(), any(), any(), any(), any(), any());
+  }
+
   @Test
   void createProgressReportRejectsCloseoutCommittedBeforeTheLock() {
     mockTransactionalDaos();

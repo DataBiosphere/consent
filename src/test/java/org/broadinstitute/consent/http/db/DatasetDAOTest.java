@@ -1408,6 +1408,26 @@ class DatasetDAOTest extends DAOTestHelper {
     assertEquals(0, approvedDatasets.size());
   }
 
+  // A canceled DAR grants nothing, even when elections were opened and approved after the cancel.
+  @Test
+  void testGetApprovedDatasetsExcludesACanceledDar() {
+    User user = createUser();
+    libraryCardDAO.insertLibraryCard(
+        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId());
+    Dataset dataset = createDataset(true);
+    Dac dac = insertDac();
+    DarCollection collection =
+        createDarCollectionWithDatasets(dac.getDacId(), user, List.of(dataset));
+    String referenceId = collection.getDars().keySet().iterator().next();
+    createDataAccessElectionWithVotes(
+        referenceId, dataset.getDatasetId(), user.getUserId(), true, VoteType.FINAL);
+    assertEquals(1, datasetDAO.getApprovedDatasets(user.getUserId()).size());
+
+    dataAccessRequestDAO.cancelByReferenceIds(List.of(referenceId));
+
+    assertTrue(datasetDAO.getApprovedDatasets(user.getUserId()).isEmpty());
+  }
+
   @ParameterizedTest
   @CsvSource({"8759, 1", "8760, 0", "8761, 0"})
   void testGetApprovedDatasetsLastTheExpirationDuration(long submittedHoursAgo, int expected) {

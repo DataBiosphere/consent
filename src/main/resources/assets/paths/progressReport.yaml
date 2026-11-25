@@ -69,8 +69,9 @@ post:
             $ref: '../schemas/ErrorResponse.yaml'
     409:
       description: |
-        Conflict. The collection already has a submitted closeout, or another request was
-        changing the collection at the same time. The second case can be retried.
+        Conflict. The parent Data Access Request is canceled, the collection already has a
+        submitted closeout, or another request was changing the collection at the same time. The
+        last case can be retried.
       content:
         application/json:
           schema:

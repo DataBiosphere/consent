@@ -780,6 +780,8 @@ FROM data_access_request dar
 WHERE dar.submission_date > now() - interval '8760 hours'
   AND final_access_vote.last_vote = TRUE
   AND dar.user_id = :userId
+  -- A canceled DAR grants nothing, even if elections were opened after the cancel.
+  AND LOWER(dar.data->>'status') IS DISTINCT FROM 'canceled'
   AND dar.collection_id NOT IN (
     SELECT DISTINCT collection_id
     FROM data_access_request

@@ -972,6 +972,23 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
         .thenReturn(List.of());
   }
 
+  // A canceled parent is refused before any document is uploaded.
+  @Test
+  void testPostProgressReportOnCanceledParentIsConflict() throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.getData().setStatus("Canceled");
+    mockProgressReportUserAndParentDar(parentDar);
+    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
+
+    try (var response =
+        resource.postProgressReport(
+            duosUser, request, "", "", collabFile.getLeft(), collabFile.getRight(), null, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
+    }
+    verify(gcsService, never()).storeDocument(any(), any(), any());
+    verify(dataAccessRequestService, never()).createProgressReport(any(), any(), any(), any());
+  }
+
   @Test
   void testPostProgressReportCollabAndEthicsFiles() {
     DataAccessRequest parentDar = generateDataAccessRequest();

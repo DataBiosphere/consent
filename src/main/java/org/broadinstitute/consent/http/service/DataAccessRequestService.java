@@ -74,6 +74,10 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.JdbiException;
 
 public class DataAccessRequestService implements ConsentLogger {
+
+  private static final String CANCELED_PARENT_ERROR =
+      "Cannot create a progress report for a canceled Data Access Request";
+
   public static final String EXPIRE_WARN_INTERVAL = "11 months";
   public static final String EXPIRE_NOTICE_INTERVAL = "8760 hours";
   public static final String ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION =
@@ -489,6 +493,16 @@ public class DataAccessRequestService implements ConsentLogger {
     closeout.setDatasetIds(dao.findDatasetIdsByCollectionId(parentDar.getCollectionId()));
   }
 
+  /**
+   * A canceled DAR gets no progress report, renewal or closeout: its researcher withdrew it, so any
+   * approval it got afterwards doesn't count.
+   */
+  public static void requireParentNotCanceled(DataAccessRequest parentDar) {
+    if (DataAccessRequest.isCanceled(parentDar)) {
+      throw new ConsentConflictException(CANCELED_PARENT_ERROR);
+    }
+  }
+
   private void validateDatasetsApprovedForParent(
       DataAccessRequestDAO dao, DataAccessRequest progressReport, DataAccessRequest parentDar) {
     Set<Integer> darDatasetIds = dao.findDatasetApprovalsByDar(parentDar.getReferenceId());
@@ -511,6 +525,10 @@ public class DataAccessRequestService implements ConsentLogger {
     if (transactionalDarDAO.hasSubmittedCloseout(parentDar.getCollectionId())) {
       throw new ConsentConflictException(
           "Cannot create a progress report for a closed out collection");
+    }
+    // The resource checked the copy it loaded; a cancel may have committed since.
+    if (transactionalDarDAO.isCanceled(parentDar.getReferenceId())) {
+      throw new ConsentConflictException(CANCELED_PARENT_ERROR);
     }
     boolean closeout = progressReport.getIsCloseoutProgressReport();
     if (closeout) {
