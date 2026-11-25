@@ -84,13 +84,15 @@ post:
             $ref: '../schemas/FileStorageObject.yaml'
     400:
       description: >-
-        Invalid category or category/entity mismatch. A file over the upload limit (`googleStore.maxUploadBytes`, 25 MB by default) is also a 400.
+        Invalid category or category/entity mismatch, or an invalid file name.
     401:
       description: Unauthorized
     403:
       description: Forbidden
     404:
       description: Not Found
+    413:
+      $ref: '../responses/UploadTooLarge.yaml'
     429:
       description: Too Many Requests - rate limit exceeded
       content:

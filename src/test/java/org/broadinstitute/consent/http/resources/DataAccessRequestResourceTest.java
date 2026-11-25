@@ -684,7 +684,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   // An upload over the limit is the client's error.
   @Test
-  void testUploadIrbDocumentOverTheLimitIsABadRequest() throws Exception {
+  void testUploadIrbDocumentOverTheLimitIs413() throws Exception {
     DataAccessRequest dar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -696,7 +696,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try (Response response =
         resource.uploadIrbDocument(
             duosUser, "", IOUtils.toInputStream("test", Charset.defaultCharset()), formData)) {
-      assertEquals(400, response.getStatus());
+      assertEquals(413, response.getStatus());
     }
   }
 

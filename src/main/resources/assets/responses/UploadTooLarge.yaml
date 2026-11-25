@@ -1,0 +1,8 @@
+description: |
+  Payload Too Large: the request is over the upload request limit (`uploads.maxRequestBytes`,
+  100 MB by default), or a file is over the file limit (`googleStore.maxUploadBytes`, 25 MB by
+  default). The uploaded files are not stored.
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/ErrorResponse.yaml'

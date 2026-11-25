@@ -155,8 +155,15 @@ public abstract class Resource implements ConsentLogger {
                 .type(MediaType.APPLICATION_JSON)
                 .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
                 .build());
-    // The dispatch matches exact classes, so the subclass needs its own entry.
-    DISPATCH.put(UploadTooLargeException.class, DISPATCH.get(BadRequestException.class));
+    DISPATCH.put(
+        UploadTooLargeException.class,
+        e ->
+            Response.status(Response.Status.REQUEST_ENTITY_TOO_LARGE)
+                .type(MediaType.APPLICATION_JSON)
+                .entity(
+                    new Error(
+                        e.getMessage(), Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode()))
+                .build());
     DISPATCH.put(
         MalformedJsonException.class,
         e ->

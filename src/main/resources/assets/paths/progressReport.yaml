@@ -48,7 +48,7 @@ post:
             $ref: '../schemas/DataAccessRequest.yaml'
     400:
       description: >-
-        Bad request. A file over the upload limit (`googleStore.maxUploadBytes`, 25 MB by default) is also a 400.
+        Bad request.
       content:
         application/json:
           schema:
@@ -75,6 +75,8 @@ post:
         application/json:
           schema:
             $ref: '../schemas/ErrorResponse.yaml'
+    413:
+      $ref: '../responses/UploadTooLarge.yaml'
     429:
       description: Too Many Requests - rate limit exceeded
       content:

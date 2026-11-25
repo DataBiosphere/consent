@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.filters.UploadSizeLimited;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.DraftSummary;
@@ -164,6 +165,7 @@ public class DraftResource extends Resource {
 
   @POST
   @Produces({MediaType.APPLICATION_JSON})
+  @UploadSizeLimited
   @Consumes({MediaType.MULTIPART_FORM_DATA})
   @Path("/v1/{draftUUID}/attachments")
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
