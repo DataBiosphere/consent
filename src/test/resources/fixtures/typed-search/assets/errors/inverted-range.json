@@ -1,0 +1,12 @@
+{
+  "example": "assets error: inverted range",
+  "source": "docs/plans/typed-search-examples-assets.md#2-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "assets",
+    "assetType": "funding_resources",
+    "scope": { "library": null },
+    "filters": [ {"key": "fundingDate", "gte": "2024-01-01", "lte": "2020-01-01"} ]
+  },
+  "response": { "status": 400, "body": {"message": "Range gte is greater than lte: fundingDate", "code": 400} }
+}

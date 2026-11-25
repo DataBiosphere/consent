@@ -1,0 +1,15 @@
+{
+  "example": "assets error: values on date range",
+  "source": "docs/plans/typed-search-examples-assets.md#2-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "assets",
+    "assetType": "biospecimens",
+    "scope": { "library": null },
+    "filters": [ {"key": "biospecimenCollectionDate", "values": ["2020-01-01"]} ]
+  },
+  "response": {
+    "status": 400,
+    "body": { "message": "Filter needs a range: biospecimenCollectionDate", "code": 400 }
+  }
+}

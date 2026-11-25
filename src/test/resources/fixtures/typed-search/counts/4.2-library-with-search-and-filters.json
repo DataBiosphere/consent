@@ -1,0 +1,29 @@
+{
+  "example": "counts 4.2, Data Library with search and filters",
+  "source": "docs/plans/typed-search-counts.md#42-data-library-with-search-and-filters",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "counts",
+    "scope": { "library": "nhgri" },
+    "search": "cardiac",
+    "filters": [ {"key": "dataType", "values": ["WGS"]}, {"key": "modelLicense", "values": ["mit"]} ]
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "counts",
+      "totals": {
+        "studies": 4,
+        "datasets": 9,
+        "models": 2,
+        "workspaces": 1,
+        "clinical_trials": 0,
+        "biospecimens": 30,
+        "publications": 5,
+        "presentations": 0,
+        "intellectual_properties": 0,
+        "funding_resources": 2
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "example": "assets error: dataset projection",
+  "source": "docs/plans/typed-search-examples-assets.md#2-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "assets", "assetType": "models", "scope": {"library": null}, "projection": "library" },
+  "response": { "status": 400, "body": {"message": "Unknown projection for models: library", "code": 400} }
+}

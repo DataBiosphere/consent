@@ -1,0 +1,7 @@
+{
+  "example": "assets error: unknown asset type",
+  "source": "docs/plans/typed-search-examples-assets.md#2-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "assets", "assetType": "datasets", "scope": {"library": null} },
+  "response": { "status": 400, "body": {"message": "Unknown asset type: datasets", "code": 400} }
+}

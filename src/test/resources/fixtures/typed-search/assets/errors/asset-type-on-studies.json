@@ -1,0 +1,10 @@
+{
+  "example": "assets error: asset type on studies",
+  "source": "docs/plans/typed-search-examples-assets.md#2-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "studies", "scope": {"library": null}, "assetType": "models" },
+  "response": {
+    "status": 400,
+    "body": { "message": "Field not accepted by view studies: assetType", "code": 400 }
+  }
+}
