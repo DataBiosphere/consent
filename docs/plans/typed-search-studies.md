@@ -69,9 +69,9 @@ The `studies` view accepts three scopes. Another scope gets a 400: no caller sen
 
 | Scope | Public visibility rule | Approved rule | Has a study | Callers |
 | --- | --- | --- | --- | --- |
-| `library` | Yes, for a user without a privileged role | **No** | Yes | Data Library, Studies tab |
+| `library` | Yes | **No** | Yes | Data Library, Studies tab |
 | `ownedByMe` | No: every role that can use the scope is exempt | No | Yes | Submissions, Studies tab |
-| `studyId` | No | No | Yes | Study page header |
+| `studyId` | Yes, with the DAC Member grant; a hidden study gets 404 | No | Yes | Study page header |
 
 - The public visibility rule and the "has a study" rule are those of the dataset registry, section
   3.
@@ -81,7 +81,9 @@ The `studies` view accepts three scopes. Another scope gets a 400: no caller sen
   the Datasets tab. The `counts` view keeps the same difference
   ([`typed-search-counts.md`](typed-search-counts.md)).
 - The `assets` view uses the rules of the `library` and `ownedByMe` rows of this table.
-- Q6 can change the rules of the `studyId` scope (slice 4).
+- A study that is not public is a row only for a user with a grant of contract section 3 (Q6),
+  including a Member of the DAC of one of its datasets on the study page. A user who created only a
+  dataset of the study sees that dataset in the `datasets` view, but not the study row or header.
 
 ## 5. Projections
 
@@ -222,6 +224,9 @@ the scope is `submission`). A study without a PI name comes last.
 A study without datasets has no row: `total` is 0 and `results` is empty. The page also reads the
 study with `Study.getById`, as today, and uses it for the name, description, data types, and PI name
 that the header lacks.
+
+For a study that is not public, a Researcher without a grant of contract section 3 gets 404, with
+the same body as a study that does not exist (Q6, Q13).
 
 ### 6.4 Errors
 
