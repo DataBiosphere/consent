@@ -159,7 +159,7 @@ same in both uses, except for the keys with two fields (below).
 - **Two fields:** `gte` applies to `startDate` and `lte` to `endDate`. As a row filter, a trial
   that starts on or after `gte` and ends on or before `lte` matches. As a study filter, the two
   bounds can match two different assets of the study, as the two ES range clauses do today
-  (`filterRegistry.ts`). Q12 can change this (slice 4).
+  (`filterRegistry.ts`). Q12 was decided to keep this (slice 4).
 - `participantCount` on the Biospecimens tab is the dataset key: a study filter, as today.
 - An inverted range (`gte` after `lte`) gets a 400 (contract section 4). duos-ui treats it as no
   filter today (`isInvertedDateRange`), so it leaves the filter out of the request.
