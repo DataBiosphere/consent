@@ -1,0 +1,11 @@
+{
+  "example": "datasets error: unknown filter key",
+  "source": "docs/plans/typed-search-examples-datasets.md#2-error-examples",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "datasets",
+    "scope": { "library": null },
+    "filters": [ {"key": "dataTyp", "values": ["WGS"]} ]
+  },
+  "response": { "status": 400, "body": {"message": "Unknown filter key: dataTyp", "code": 400} }
+}

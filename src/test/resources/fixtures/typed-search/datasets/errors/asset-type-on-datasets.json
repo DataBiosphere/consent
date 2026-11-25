@@ -1,0 +1,10 @@
+{
+  "example": "datasets error: asset type on datasets",
+  "source": "docs/plans/typed-search-examples-datasets.md#2-error-examples",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "datasets", "scope": {"library": null}, "assetType": "models" },
+  "response": {
+    "status": 400,
+    "body": { "message": "Field not accepted by view datasets: assetType", "code": 400 }
+  }
+}

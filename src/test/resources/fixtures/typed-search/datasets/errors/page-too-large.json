@@ -1,0 +1,7 @@
+{
+  "example": "datasets error: page too large",
+  "source": "docs/plans/typed-search-examples-datasets.md#2-error-examples",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "datasets", "scope": {"library": null}, "page": {"offset": 0, "limit": 10001} },
+  "response": { "status": 400, "body": {"message": "page.limit must be 10000 or less", "code": 400} }
+}
