@@ -287,11 +287,12 @@ class ScopedDarMetricsDAOTest extends DarLifecycleDAOTestHelper {
     assertEquals(AccessEndReason.EXPIRED, ended.getFirst().reason());
   }
 
-  @Test
-  void archivedDarsGrantNoAccessToExpire() {
+  @ParameterizedTest
+  @ValueSource(strings = {"Canceled", "Archived"})
+  void canceledAndArchivedDarsGrantNoAccessToExpire(String status) {
     Integer dataset = createDataset();
     Instant submitted = now.minus(Duration.ofDays(400));
-    approve(createDar(withStatus("Archived"), submitted, dataset), dataset, submitted);
+    approve(createDar(withStatus(status), submitted, dataset), dataset, submitted);
 
     assertTrue(expirations(List.of(dataset)).isEmpty());
   }
