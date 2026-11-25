@@ -36,6 +36,9 @@ consent document builder (`ElasticSearchService`, `DatasetTerm`, `StudyTerm`, `D
 - `instantApproval`: a dataset with no value matches neither `true` nor `false`, as today.
 - `dataUseModifiers` facets need `size` 50: the vocabulary has more than 10 codes
   (`datasetAsset.ts` `FILTER_AGGS`).
+- The Submissions table also marks its Dataset Submitter column as sortable
+  (`submissionColumns.tsx`), but ES cannot sort it today, and the view has no sort key for it.
+  duos-ui turns sorting off on that column (DT-4512).
 - The asset filter keys of the library (for example `publicationJournal`) are also keys of the
   `datasets` view. They narrow the studies of the datasets, as today. Slice 3 lists them.
 
@@ -79,7 +82,9 @@ The server adds these rules to each `datasets` query. The caller cannot remove t
 
 `dataUse` is `{ "primary": [ { "code", "description" } ], "secondary": [ { "code", "description" } ] }`,
 as in the ES document. duos-ui shows the description ("DS (disease)", tooltips), and DAR review
-groups datasets by the full object.
+groups datasets by the full object. `dataUse` is always present in a projection that has it, with
+empty lists when the dataset has no codes; any other field without a value is absent (contract
+section 7).
 
 The default projection of the `datasets` view depends on the scope (section 5).
 
