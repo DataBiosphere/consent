@@ -1,0 +1,20 @@
+{
+  "example": "datasets 1.10, study page selection",
+  "source": "docs/plans/typed-search-examples-datasets.md#110-study-page-selection",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "datasets",
+    "scope": { "studyId": 7 },
+    "projection": "selection",
+    "page": { "offset": 0, "limit": 10000 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "datasets",
+      "total": 12500,
+      "page": { "offset": 0, "limit": 10000 },
+      "results": [ {"datasetId": 101, "accessManagement": "controlled", "dacApproval": true, "dacId": 3} ]
+    }
+  }
+}

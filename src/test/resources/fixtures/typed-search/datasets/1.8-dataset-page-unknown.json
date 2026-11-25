@@ -1,0 +1,16 @@
+{
+  "example": "datasets 1.8, an identifier that matches no dataset",
+  "source": "docs/plans/typed-search-examples-datasets.md#18-dataset-page",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "datasets",
+    "scope": { "datasetIdentifiers": ["DUOS-999999"] },
+    "projection": "detail",
+    "page": { "offset": 0, "limit": 1 }
+  },
+  "response": {
+    "status": 404,
+    "body": { "message": "Not found: datasetIdentifiers", "code": 404 },
+    "serverCheck": "no dataset has identifier DUOS-999999: the same status and body as a dataset the user cannot see (Q13)"
+  }
+}

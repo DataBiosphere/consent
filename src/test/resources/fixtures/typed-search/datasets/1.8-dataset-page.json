@@ -1,0 +1,41 @@
+{
+  "example": "datasets 1.8, dataset page",
+  "source": "docs/plans/typed-search-examples-datasets.md#18-dataset-page",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": {
+    "view": "datasets",
+    "scope": { "datasetIdentifiers": ["DUOS-000101"] },
+    "projection": "detail",
+    "page": { "offset": 0, "limit": 1 }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "view": "datasets",
+      "total": 1,
+      "page": { "offset": 0, "limit": 1 },
+      "results": [
+        {
+          "datasetId": 101,
+          "datasetIdentifier": "DUOS-000101",
+          "datasetName": "Adult Sequencing Cohort",
+          "accessManagement": "controlled",
+          "requestLocation": "DUOS",
+          "dataLocation": "AnVIL Workspace",
+          "url": "https://example.org/workspace",
+          "participantCount": 1200,
+          "dacId": 3,
+          "instantApprovalEligible": false,
+          "dataUse": { "primary": [{"code": "GRU", "description": "General research use"}], "secondary": [] },
+          "study": {
+            "studyName": "Heart Study",
+            "description": "...",
+            "phenotype": "Cardiovascular",
+            "piName": "Pat Investigator",
+            "dataCustodianEmail": [ "custodian@example.org" ]
+          }
+        }
+      ]
+    }
+  }
+}
