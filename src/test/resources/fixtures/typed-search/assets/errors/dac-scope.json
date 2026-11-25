@@ -1,0 +1,7 @@
+{
+  "example": "assets error: dac scope",
+  "source": "docs/plans/typed-search-examples-assets.md#2-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "assets", "assetType": "models", "scope": {"dacIds": [3]} },
+  "response": { "status": 400, "body": {"message": "Scope not accepted by view assets: dacIds", "code": 400} }
+}

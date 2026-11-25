@@ -1,0 +1,7 @@
+{
+  "example": "assets error: no asset type",
+  "source": "docs/plans/typed-search-examples-assets.md#2-errors",
+  "user": { "roles": ["RESEARCHER"] },
+  "request": { "view": "assets", "scope": {"library": null} },
+  "response": { "status": 400, "body": {"message": "Missing field: assetType", "code": 400} }
+}

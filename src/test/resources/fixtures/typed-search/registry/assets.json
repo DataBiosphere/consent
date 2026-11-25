@@ -1,0 +1,225 @@
+{
+  "view": "assets",
+  "source": "docs/plans/typed-search-assets-registry.md",
+  "requestFields": [ "view", "assetType", "scope", "search", "filters", "facets", "sort", "page", "projection" ],
+  "scopes": { "library": [], "ownedByMe": ["DATASUBMITTER", "CHAIRPERSON", "ADMIN"] },
+  "rowFields": [ "studyId", "studyName", "assetKey" ],
+  "assetTypes": {
+    "models": {
+      "assetKey": "id",
+      "idField": "modelId",
+      "fields": [
+        "modelId",
+        "duosIdentifier",
+        "name",
+        "description",
+        "url",
+        "format",
+        "license",
+        "cloud",
+        "trainedOnDatasets",
+        "maintainer",
+        "tags"
+      ],
+      "sorts": [ "name", "studyName", "duosIdentifier", "format", "license", "maintainerName" ],
+      "filters": { "modelFormat": "text", "modelLicense": "text", "modelCloud": "text", "modelTags": "text" },
+      "facets": [ "modelFormat", "modelLicense", "modelCloud", "modelTags" ]
+    },
+    "workspaces": {
+      "assetKey": "id",
+      "idField": "workspaceId",
+      "fields": [
+        "workspaceId",
+        "duosIdentifier",
+        "name",
+        "platform",
+        "url",
+        "description",
+        "tools",
+        "cloud",
+        "access",
+        "tags"
+      ],
+      "sorts": [ "name", "studyName", "duosIdentifier", "platform", "description", "access" ],
+      "filters": {
+        "workspaceTools": "text",
+        "workspacePlatform": "text",
+        "workspaceCloud": "text",
+        "workspaceAccess": "text"
+      },
+      "facets": [ "workspaceTools", "workspacePlatform", "workspaceCloud", "workspaceAccess" ]
+    },
+    "biospecimens": {
+      "assetKey": "id",
+      "idField": "biospecimenId",
+      "fields": [
+        "biospecimenId",
+        "sampleId",
+        "duosIdentifier",
+        "donorId",
+        "specimenType",
+        "preservationMethod",
+        "preservationDetails",
+        "dateOfCollection",
+        "postMortemInterval",
+        "sex",
+        "age",
+        "race",
+        "countryOfOrigin",
+        "extractedDiagnoses",
+        "pathology",
+        "organization",
+        "sourceSite",
+        "optionalDataUse"
+      ],
+      "sorts": [ "studyName", "duosIdentifier", "sampleId", "specimenType", "donorId", "dateOfCollection" ],
+      "filters": {
+        "biospecimenType": "text",
+        "biospecimenPostMortemIntervalUnit": "text",
+        "biospecimenDataUse": "text",
+        "biospecimenPostMortemInterval": "number-range",
+        "biospecimenCollectionDate": "date-range"
+      },
+      "facets": [ "biospecimenDataUse" ]
+    },
+    "clinical_trials": {
+      "assetKey": "pos",
+      "fields": [
+        "clinicalTrialId",
+        "title",
+        "registry",
+        "identifier",
+        "status",
+        "sponsor",
+        "startDate",
+        "endDate",
+        "interventionType",
+        "description",
+        "phase",
+        "url",
+        "tags"
+      ],
+      "sorts": [
+        "title",
+        "studyName",
+        "identifier",
+        "status",
+        "phase",
+        "interventionType",
+        "sponsor",
+        "startDate"
+      ],
+      "filters": {
+        "clinicalTrialStatus": "text",
+        "clinicalTrialPhase": "text",
+        "clinicalTrialInterventionType": "text",
+        "clinicalTrialRegistry": "text",
+        "clinicalTrialDates": "date-range"
+      },
+      "facets": [ "clinicalTrialRegistry" ]
+    },
+    "publications": {
+      "assetKey": "pos",
+      "fields": [
+        "publicationId",
+        "title",
+        "pubmedId",
+        "publishedDate",
+        "authors",
+        "bibliographicCitation",
+        "datasetCitation",
+        "citation",
+        "journal",
+        "doi",
+        "url",
+        "access",
+        "tags"
+      ],
+      "sorts": [ "title", "studyName", "journal", "publishedDate", "pubmedId", "doi", "access", "citation" ],
+      "filters": {
+        "publicationJournal": "text",
+        "publicationAccess": "text",
+        "publicationPublishedDate": "date-range"
+      },
+      "facets": [ "publicationJournal", "publicationAccess" ]
+    },
+    "presentations": {
+      "assetKey": "pos",
+      "fields": [
+        "presentationId",
+        "title",
+        "date",
+        "url",
+        "authors",
+        "datasetCitation",
+        "citation",
+        "presenter",
+        "event",
+        "location",
+        "format",
+        "access",
+        "tags"
+      ],
+      "sorts": [ "title", "studyName", "event", "date", "location", "format", "access", "citation" ],
+      "filters": {
+        "presentationEvent": "text",
+        "presentationFormat": "text",
+        "presentationAccess": "text",
+        "presentationDate": "date-range"
+      },
+      "facets": [ "presentationEvent", "presentationFormat", "presentationAccess" ]
+    },
+    "intellectual_properties": {
+      "assetKey": "pos",
+      "fields": [
+        "ipId",
+        "type",
+        "title",
+        "assignee",
+        "patentNumber",
+        "filingDate",
+        "status",
+        "url",
+        "contact",
+        "tags"
+      ],
+      "sorts": [
+        "title",
+        "studyName",
+        "type",
+        "patentNumber",
+        "assignee",
+        "status",
+        "filingDate",
+        "contact"
+      ],
+      "filters": { "ipType": "text", "ipStatus": "text", "ipFiledDate": "date-range" },
+      "facets": [ "ipType", "ipStatus" ]
+    },
+    "funding_resources": {
+      "assetKey": "pos",
+      "fields": [
+        "fundingId",
+        "funderName",
+        "funderProgram",
+        "grantNumber",
+        "projectTitle",
+        "startDate",
+        "endDate",
+        "url",
+        "tags"
+      ],
+      "sorts": [
+        "studyName",
+        "fundingId",
+        "funderName",
+        "funderProgram",
+        "grantNumber",
+        "projectTitle",
+        "startDate"
+      ],
+      "filters": { "fundingFunderName": "text", "fundingDate": "date-range" },
+      "facets": [ "fundingFunderName" ]
+    }
+  }
+}
