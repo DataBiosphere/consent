@@ -105,7 +105,7 @@ the cards do not show it (`useStudyDetailsData.ts` notes this), so the library s
 return the emails of every study in bulk. This follows the rule of the dataset registry, section 5.
 
 - `studyName`, `studyDescription` (from `study.description`), `piName`, `species`, `phenotype`,
-  `dataCustodianEmail` (a list, `submission` only), and `dataTypes` (a list) come from the study.
+  `dataCustodianEmail` (a list, in `submission` and `header`), and `dataTypes` (a list) come from the study.
 - `datasetCount`, `totalParticipants`, and `datasetIds` cover the matching datasets. `datasetIds`
   drives the study checkbox, which selects every dataset of the study. A row has 10,000 ids at
   most, as ES returns today (`terms` size 10,000), so the size of a row has a limit.
