@@ -327,9 +327,11 @@ public class DACAutomationRuleService implements ConsentLogger {
       return dataAccessRequestDAO.inTransaction(
           dao -> {
             CollectionLocks.lockOpenCollection(dao, dar.getCollectionId());
-            // The DAR was read before the lock; skip it if it is no longer submitted.
-            if (!dao.isSubmittedAt(dar.getReferenceId(), dar.getSubmissionDate())) {
-              throw new ConsentConflictException("The Data Access Request is no longer submitted.");
+            // The DAR was read before the lock; skip it if it is no longer submitted or was
+            // canceled.
+            if (!dao.isUnderReviewAt(dar.getReferenceId(), dar.getSubmissionDate())) {
+              throw new ConsentConflictException(
+                  "The Data Access Request is no longer submitted, or was canceled.");
             }
             return openElectionAndApproveInTransaction(
                 rule, ruleImplementation, dar, dataset, request);

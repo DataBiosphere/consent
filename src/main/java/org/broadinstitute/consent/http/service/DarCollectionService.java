@@ -82,6 +82,8 @@ public class DarCollectionService implements ConsentLogger {
       "User is not a chairperson for any dataset in this collection";
   private static final String DRAFT_ELECTION_ERROR =
       "Cannot open elections on a collection that has a draft.";
+  private static final String CANCELED_ELECTION_ERROR =
+      "Cannot open elections on a data access request its researcher canceled.";
   private static final String CHANGED_ELECTION_ERROR =
       "The collection changed since it was loaded. Reload it and try again.";
   private static final String CREATE_ELECTION_DATASET_ERROR = "At least one dataset is required";
@@ -1037,15 +1039,20 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
       throws BadRequestException, ForbiddenException, ConsentConflictException {
     DataAccessRequest dar = validateElectionCreation(user, collection);
+    // After the role and DAC checks, so only a chair who governs the DAR learns it was canceled.
+    // The check under the lock below catches a cancel that committed after the load.
+    if (DataAccessRequest.isCanceled(dar)) {
+      throw new ConsentConflictException(CANCELED_ELECTION_ERROR);
+    }
     if ((!dar.getRequiresSOApproval() || dar.getApprovingSigningOfficialUserId() != null)) {
       try {
         List<String> createdElectionReferenceIds =
             dataAccessRequestDAO.inTransaction(
                 dao -> {
                   CollectionLocks.lockOpenCollection(dao, collection.getDarCollectionId());
-                  // Resubmit takes the same lock, so this sees a resubmit (and any submit after
-                  // it) that committed after the collection was loaded.
-                  if (!dao.isSubmittedAt(dar.getReferenceId(), dar.getSubmissionDate())) {
+                  // Resubmit and cancel take the same lock, so this sees a resubmit (and any
+                  // submit after it) or a cancel that committed after the collection was loaded.
+                  if (!dao.isUnderReviewAt(dar.getReferenceId(), dar.getSubmissionDate())) {
                     throw new ConsentConflictException(CHANGED_ELECTION_ERROR);
                   }
                   return collectionServiceDAO.createElectionsForDarByUser(user, dar);
@@ -1108,11 +1115,12 @@ public class DarCollectionService implements ConsentLogger {
     dataAccessRequestDAO.inTransaction(
         dao -> {
           CollectionLocks.lockOpenCollection(dao, collectionId);
-          // The DAR was read before the lock. If it is no longer submitted, it gets no elections.
+          // The DAR was read before the lock. If it is no longer submitted, or was canceled, it
+          // gets no elections.
           DataAccessRequest latestDar = context.latestDar();
-          if (!dao.isSubmittedAt(latestDar.getReferenceId(), latestDar.getSubmissionDate())) {
+          if (!dao.isUnderReviewAt(latestDar.getReferenceId(), latestDar.getSubmissionDate())) {
             logWarn(
-                "Skipping elections for DAR %s: no longer submitted"
+                "Skipping elections for DAR %s: no longer submitted, or canceled"
                     .formatted(latestDar.getReferenceId()));
             return null;
           }

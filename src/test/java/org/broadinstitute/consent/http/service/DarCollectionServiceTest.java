@@ -765,9 +765,45 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(darCollectionServiceDAO, never()).createElectionsForDarByUser(any(), any());
   }
 
+  // The chair who governs the DAR gets 409 before the lock; another DAC's chair still gets 403, so
+  // only the governing chair learns that the DAR was canceled.
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void electionCreationRejectsACanceledDar(boolean governingChair) {
+    User chair = new User();
+    chair.setChairpersonRoleWithDAC(1);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setStatus("Canceled");
+    DataAccessRequest canceled = new DataAccessRequest();
+    canceled.setReferenceId(UUID.randomUUID().toString());
+    canceled.setDatasetIds(List.of(10));
+    canceled.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
+    canceled.setData(data);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(canceled);
+    when(datasetDAO.findDatasetIdsByDacIds(List.of(1)))
+        .thenReturn(List.of(governingChair ? 10 : 20));
+
+    if (governingChair) {
+      ConsentConflictException e =
+          assertThrows(
+              ConsentConflictException.class,
+              () -> service.createElectionsForDarCollection(chair, collection));
+      assertEquals(
+          "Cannot open elections on a data access request its researcher canceled.",
+          e.getMessage());
+    } else {
+      assertThrows(
+          ForbiddenException.class,
+          () -> service.createElectionsForDarCollection(chair, collection));
+    }
+    verify(dataAccessRequestDAO, never()).lockCollection(any());
+    verify(darCollectionServiceDAO, never()).createElectionsForDarByUser(any(), any());
+  }
+
   @Test
   void testCreateElectionsForDarCollection() throws Exception {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     User user = new User();
     user.setEmail("email");
     user.setChairpersonRoleWithDAC(1);
@@ -793,7 +829,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void testCreateElectionsForDarCollectionRecordsEachMembersOwnDatasets() throws Exception {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     User chair = new User();
     chair.setUserId(1);
     chair.setEmail("email");
@@ -894,7 +930,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void testCreateElectionsForDarCollectionAsChairOfGoverningDacIsAllowed() {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     User user = new User();
     user.setUserId(1);
     user.setEmail("email");
@@ -1640,7 +1676,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void testCreateElectionsForDarCollection_Chairperson_SO_Approval_Not_Needed() {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
@@ -1699,7 +1735,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void testCreateElectionsForDarCollection_Chairperson_With_SO_Approval() {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
@@ -1732,7 +1768,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void testCreateElectionsForProgressReport() throws Exception {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     User user = new User();
     user.setEmail("email");
     user.setChairpersonRoleWithDAC(1);
@@ -1767,7 +1803,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void testCreateElectionsForDarCollectionEmpty() {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     User user = new User();
     user.setEmail("email");
     user.setChairpersonRoleWithDAC(1);
@@ -1786,7 +1822,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void testCreateElectionsForDarCollectionVoteUsersException() throws Exception {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     User user = new User();
     user.setEmail("email");
     user.setChairpersonRoleWithDAC(1);
@@ -4376,7 +4412,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
    */
   @Test
   void testFullFlow_TwoAutoOpenDacs_DistinctChairsAndMembers_VotesCreatedPerDac() {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     User chairDac10 = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, 10);
     User memberDac10 = createUserWithRoleAndDacId(UserRoles.MEMBER, 10);
     User chairDac20 = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, 20);
@@ -4498,14 +4534,16 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersForDatasetsByRole(anyList(), anyList())).thenReturn(Set.of(chairDac10));
     when(dacAutomationRuleService.findAllByDacId(10)).thenReturn(List.of(autoOpenRule));
     // No longer submitted by the time of the lock.
-    when(dataAccessRequestDAO.isSubmittedAt(dar.getReferenceId(), dar.getSubmissionDate()))
+    when(dataAccessRequestDAO.isUnderReviewAt(dar.getReferenceId(), dar.getSubmissionDate()))
         .thenReturn(false);
 
     service.createElectionsForNewDarCollection(1);
 
     InOrder order = inOrder(dataAccessRequestDAO);
     order.verify(dataAccessRequestDAO).lockCollection(1);
-    order.verify(dataAccessRequestDAO).isSubmittedAt(dar.getReferenceId(), dar.getSubmissionDate());
+    order
+        .verify(dataAccessRequestDAO)
+        .isUnderReviewAt(dar.getReferenceId(), dar.getSubmissionDate());
     verify(dacAutomationRuleService, never()).createOpenElectionForDAR(any(), any());
   }
 
@@ -4517,7 +4555,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
    */
   @Test
   void testFullFlow_MixedDacs_OnlyAutoOpenDacReceivesElectionsAndVotes() {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     User chairDac10 = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, 10);
     User memberDac10 = createUserWithRoleAndDacId(UserRoles.MEMBER, 10);
     User chairDac20 = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, 20);
@@ -4590,7 +4628,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
    */
   @Test
   void testFullFlow_UserChairsBothAutoOpenDacs_GetsFullVotesInBothElections() {
-    when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
+    when(dataAccessRequestDAO.isUnderReviewAt(any(), any())).thenReturn(true);
     // sharedChair has CHAIRPERSON role for both DAC 10 and DAC 20
     User sharedChair = new User();
     sharedChair.setUserId(nextUserId++);

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -323,6 +324,25 @@ class VoteServiceTest extends AbstractTestHelper {
     List<Integer> votes = List.of(1);
     assertThrows(
         ConsentConflictException.class, () -> service.updateRationaleByVoteIds(votes, "rationale"));
+  }
+
+  @Test
+  void testUpdateRationaleByVoteIds_CanceledDar() {
+    Election election = new Election();
+    election.setReferenceId("synthetic-canceled-dar");
+    election.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    election.setStatus(ElectionStatus.OPEN.getValue());
+    when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
+    when(dataAccessRequestDAO.hasCanceledForReferenceIds(List.of("synthetic-canceled-dar")))
+        .thenReturn(true);
+    List<Integer> votes = List.of(1);
+
+    ConsentConflictException e =
+        assertThrows(
+            ConsentConflictException.class,
+            () -> service.updateRationaleByVoteIds(votes, "rationale"));
+    assertEquals("Cannot vote on a canceled data access request.", e.getMessage());
+    verify(voteDAO, never()).updateRationaleByVoteIds(any(), any());
   }
 
   @Test
@@ -1204,6 +1224,29 @@ class VoteServiceTest extends AbstractTestHelper {
         ConsentConflictException.class,
         () -> service.updateVotesWithValue(votes, true, "synthetic rationale", voter));
     verify(voteServiceDAO, never()).updateVotesWithValue(any(), anyBoolean(), any());
+  }
+
+  @Test
+  void testCannotVoteOnACanceledDar() throws Exception {
+    Vote vote = new Vote();
+    vote.setElectionId(10);
+    Election election = new Election();
+    election.setReferenceId("synthetic-canceled-dar");
+    election.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    election.setStatus(ElectionStatus.OPEN.getValue());
+    when(electionDAO.findElectionsByIds(List.of(10))).thenReturn(List.of(election));
+    when(dataAccessRequestDAO.hasCanceledForReferenceIds(List.of("synthetic-canceled-dar")))
+        .thenReturn(true);
+    List<Vote> votes = List.of(vote);
+    User voter = new User();
+
+    ConsentConflictException e =
+        assertThrows(
+            ConsentConflictException.class,
+            () -> service.updateVotesWithValue(votes, true, "synthetic rationale", voter));
+    assertEquals("Cannot vote on a canceled data access request.", e.getMessage());
+    verify(voteServiceDAO, never()).updateVotesWithValue(any(), anyBoolean(), any());
+    verify(emailService, never()).sendMessage(any(), any());
   }
 
   @ParameterizedTest
