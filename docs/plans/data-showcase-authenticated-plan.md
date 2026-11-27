@@ -124,11 +124,11 @@ Choosing "sign in to see more" changes Task 2 only.
   `@Auth`, the same body parsing, request caps, service call, `unavailable` result and `no-store`
   response as `PublicShowcaseCatalogResource`. Share the code rather than copy it.
 - Date every dataset by `create_date` on this route: a bound `:datedByCreation` switch in the
-  existing `CASE` of `findShowcaseSummaries` and `findShowcaseNewestAliases`, like their
-  `:openAccessOnly` switch, so each query stays one text block. `ShowcaseCatalogService` takes the
-  date choice from the resource and passes it on every `findShowcaseSummaries` call (identifiers,
-  ranking and page modes) and to `findShowcaseNewestAliases`. The anonymous route keeps its S2.1
-  date.
+  existing `CASE` of `findShowcaseSummaries` and `findShowcaseNewestAliases`, like the
+  `:openAccessOnly` switch in `findShowcaseNewestAliases`, so each query stays one text block.
+  `ShowcaseCatalogService` takes the date choice from the resource and passes it on every
+  `findShowcaseSummaries` call (identifiers, ranking and page modes) and to
+  `findShowcaseNewestAliases`. The anonymous route keeps its S2.1 date.
 - OpenAPI path under `/api`, with the 401, the 403, the 429 and its own `availableDate` description.
 - Tests: contract, eligibility, the exact S2.1 keys, the `create_date` dating and ranking of a
   controlled dataset, 401 without a user, 403 for a user without the roles, and the per-user rate
@@ -153,9 +153,10 @@ Choosing "sign in to see more" changes Task 2 only.
 
 - Remove `showcaseHandoffsEnabled` from the BFF (`server/src/config.ts`) and the client
   (`src/libs/config.ts`), and the production-data preview notice.
-- No one sees a pending showcase with live cards before it goes live. A reviewer checks its
-  identifiers with the Task 4 health check, run locally against production with their own
-  credentials; the S4.1 guide adds that step to the showcase PR checklist.
+- No one sees a pending showcase with live cards before it goes live. A new showcase merges with
+  `status: 'hidden'`; a manual Task 4 run on `develop` then checks its identifiers, and a one-line
+  PR sets it `live`. No one runs a PR's code, configs included, with a production credential. The
+  S4.1 guide adds these steps to the showcase PR checklist.
 - Update the S4.2 procedure and acceptance check, S5.1 and S5.3 in `data-showcase-delivery-plan.md`,
   D19 in `data-showcase-contracts.md`, and `docs/data-showcase.md` and `docs/data-showcase-lookup.md`
   in duos-ui.
@@ -170,6 +171,6 @@ anonymous lookup; this task moves it to the authenticated route.
 - Give the credential only to the scheduled and manual runs on `develop`, through Workload Identity
   Federation or an environment-scoped secret, and send it only to production Consent over HTTPS. A
   manual run given another `lookup_url` runs without it. Pull-request runs execute the PR's own script, so they
-  run without it: they check links only, and a showcase PR's identifiers are checked by the
-  reviewer's local run (Task 3) and then by the daily run.
+  run without it: they check links only, and a new showcase's identifiers are checked by the
+  manual run before it goes live (Task 3).
 - DT-4359 is then no longer blocked by DT-4466.
