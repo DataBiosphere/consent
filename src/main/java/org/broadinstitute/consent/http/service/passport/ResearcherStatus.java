@@ -27,11 +27,15 @@ public class ResearcherStatus implements VisaClaimType {
         Optional.ofNullable(user.getLibraryCard())
             .map(LibraryCard::getCreateDate)
             .orElse(user.getCreateDate());
-    return PassportService.getEpochSeconds(assertedDate.toInstant());
+    if (assertedDate == null) {
+      return PassportService.getEpochSeconds(java.time.Instant.now());
+    }
+    // java.sql.Date#toInstant throws UnsupportedOperationException; use epoch millis instead.
+    return PassportService.getEpochSeconds(java.time.Instant.ofEpochMilli(assertedDate.getTime()));
   }
 
   @Override
-  public String value() {
+  public Object value() {
     // See https://broadworkbench.atlassian.net/browse/DT-2863
     // This will be replaced with an external profile link.
     return PassportService.ISS;
